@@ -1,2 +1,10 @@
 *.pkl filter=lfs diff=lfs merge=lfs -text
 *.joblib filter=lfs diff=lfs merge=lfs -text
+dataset.pkl filter=lfs diff=lfs merge=lfs -text
+model_path_conversion_probability.joblib filter=lfs diff=lfs merge=lfs -text
+model_postgame.joblib filter=lfs diff=lfs merge=lfs -text
+model_realtime.joblib filter=lfs diff=lfs merge=lfs -text
+pipeline_base_pred_df.pkl filter=lfs diff=lfs merge=lfs -text
+pipeline_df.pkl filter=lfs diff=lfs merge=lfs -text
+pipeline_df_model.pkl filter=lfs diff=lfs merge=lfs -text
+pipeline_df_punt_fg.pkl filter=lfs diff=lfs merge=lfs -text
