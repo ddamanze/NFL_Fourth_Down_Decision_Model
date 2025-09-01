@@ -1,7 +1,7 @@
 import pandas as pd
-.from coaches import Coaches
-.from model_trainer import ModelTrainer
-.from run import RunPipeline
+from .coaches import Coaches
+from .model_trainer import ModelTrainer
+from .run import RunPipeline
 # from data_loader import DataLoader
 # from process_data import ProcessData
 import joblib
