@@ -7,9 +7,9 @@ import os
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.model_selection import RandomizedSearchCV
-from utils import param_dist
-from config import CONFIG
-from process_data import ProcessData
+from .utils import param_dist
+from .config import CONFIG
+from .process_data import ProcessData
 import logging
 import xgboost as xgb
 from sklearn.metrics import mean_absolute_error, accuracy_score
