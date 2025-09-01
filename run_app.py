@@ -20,7 +20,10 @@ import requests
 from openai import OpenAI
 import os
 
+import pkg_resources
 
+installed = {d.key: d.version for d in pkg_resources.working_set}
+st.write("Installed packages:", installed)
 st.markdown(
     "<h1 style='text-align: center;'>4th Down Decision Dashboard</h1>",
     unsafe_allow_html=True
