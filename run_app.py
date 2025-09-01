@@ -1,7 +1,7 @@
 import pandas as pd
-from coaches import Coaches
-from model_trainer import ModelTrainer
-from run import RunPipeline
+.from coaches import Coaches
+.from model_trainer import ModelTrainer
+.from run import RunPipeline
 # from data_loader import DataLoader
 # from process_data import ProcessData
 import joblib
@@ -10,12 +10,12 @@ st.set_page_config(layout="wide")
 import streamlit.components.v1 as components
 import plotly.graph_objects as go
 import json
-from added_features import (
+from .added_features import (
 distance_bin, field_position, score_difference, fourth_and_one, compute_distance_success_rates,
 score_diff_subtraction, add_yardline_100, get_knn_features,
 drive_inside20, game_half, half_seconds_remaining, game_seconds_remaining)
-from config import MODEL_SIMULATION_COLUMNS
-from utils import run_streamlit_preloads, model_misses, scenario_sentence
+from .config import MODEL_SIMULATION_COLUMNS
+from .utils import run_streamlit_preloads, model_misses, scenario_sentence
 import requests
 from openai import OpenAI
 import os
@@ -33,14 +33,14 @@ client = OpenAI(api_key=st.secrets["api"]["OPENAI_API_KEY"])
 
 @st.cache_data
 def get_data_loader():
-    from data_loader import DataLoader
+    from .data_loader import DataLoader
     return DataLoader()
 
 data_loader = get_data_loader()
 
 @st.cache_data
 def get_process_data():
-    from process_data import ProcessData
+    from .process_data import ProcessData
     return ProcessData()
 
 process_data = get_process_data()
