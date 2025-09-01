@@ -1,3 +1,5 @@
+import os
+sys.path.append(os.path.dirname(__file__))
 import pandas as pd
 # from data_loader import DataLoader
 # from process_data import ProcessData
@@ -9,8 +11,6 @@ import plotly.graph_objects as go
 import json
 import requests
 from openai import OpenAI
-import os
-sys.path.append(os.path.dirname(__file__))
 from .coaches import Coaches
 from .model_trainer import ModelTrainer
 from .run import RunPipeline
