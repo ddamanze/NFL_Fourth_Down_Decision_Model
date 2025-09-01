@@ -10,8 +10,6 @@ st.set_page_config(layout="wide")
 import streamlit.components.v1 as components
 import plotly.graph_objects as go
 import json
-from sklearn.neighbors import NearestNeighbors
-from sklearn.preprocessing import StandardScaler
 from added_features import (
 distance_bin, field_position, score_difference, fourth_and_one, compute_distance_success_rates,
 score_diff_subtraction, add_yardline_100, get_knn_features,
