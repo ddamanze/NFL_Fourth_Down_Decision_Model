@@ -55,42 +55,35 @@ if df.empty:
 #     from process_data import ProcessData
 #     return ProcessData()
 
-pipeline_df = "https://github.com/ddamanze/NFL_Fourth_Down_Decision_Model/releases/download/v1.0-datasets/pipeline_df.pkl"
-pipeline_df_model = "https://github.com/ddamanze/NFL_Fourth_Down_Decision_Model/releases/download/v1.0-datasets/pipeline_df_model.pkl"
-pipeline_df_punt_fg_url = "https://github.com/ddamanze/NFL_Fourth_Down_Decision_Model/releases/download/v1.0-datasets/pipeline_df_punt_fg.pkl"
-pipeline_base_pred_df = "https://github.com/ddamanze/NFL_Fourth_Down_Decision_Model/releases/download/v1.0-datasets/pipeline_base_pred_df.pkl"
-
-# Download the file
-response_df = requests.get(pipeline_df)
-response_df_model = requests.get(pipeline_df_model)
-response_df_punt_fg = requests.get(pipeline_df_punt_fg_url)
-response_base_pred_df = requests.get(pipeline_base_pred_df)
-#response.raise_for_status()  # raises error if download failed
-
-# process_data = get_process_data()
-# df = pd.read_parquet(BytesIO(response_dataset.content), engine='pyarrow')
-# model_trainer = ModelTrainer(df)
-# model_trainer.model()
-# pipeline = RunPipeline(model_trainer.df, mode='realtime')
-# pipeline.run_pipeline()
+pipeline_urls = {
+    "df": "https://github.com/ddamanze/NFL_Fourth_Down_Decision_Model/releases/download/v1.0-datasets/pipeline_df.pkl",
+    "df_model": "https://github.com/ddamanze/NFL_Fourth_Down_Decision_Model/releases/download/v1.0-datasets/pipeline_df_model.pkl",
+    "df_punt_fg": "https://github.com/ddamanze/NFL_Fourth_Down_Decision_Model/releases/download/v1.0-datasets/pipeline_df_punt_fg.pkl",
+    "base_pred_df": "https://github.com/ddamanze/NFL_Fourth_Down_Decision_Model/releases/download/v1.0-datasets/pipeline_base_pred_df.pkl"
+}
 
 @st.cache_data
 def load_pipeline_outputs():
-    df = joblib.load(BytesIO(response_df.content))
-    df_model = joblib.load(BytesIO(response_df_model.content))
-    df_punt_fg = joblib.load(BytesIO(response_df_punt_fg.content))
-    base_pred_df = joblib.load(BytesIO(response_base_pred_df.content))
+    outputs = {}
+    for name, url in pipeline_urls.items():
+        try:
+            response = requests.get(url)
+            response.raise_for_status()  # crash if download fails
+            outputs[name] = joblib.load(BytesIO(response.content))
+        except Exception as e:
+            st.error(f"Failed to load {name}: {e}")
+            outputs[name] = None
 
-    # Ensure expected columns exist
-    for col in ['model_recommendation', 'decision_class', 'year']:
-        if col not in df.columns:
-            df[col] = None
+    # Ensure expected columns exist in df
+    if outputs["df"] is not None:
+        for col in ['model_recommendation', 'decision_class', 'year']:
+            if col not in outputs["df"].columns:
+                outputs["df"][col] = None
 
-    return df, df_model, df_punt_fg, base_pred_df
-
+    return outputs["df"], outputs["df_model"], outputs["df_punt_fg"], outputs["base_pred_df"]
 
 df, df_model, df_punt_fg, base_pred_df = load_pipeline_outputs()
-st.write("datasets loaded")
+
 
 # Inject CSS once at the top of your app
 st.markdown("""
