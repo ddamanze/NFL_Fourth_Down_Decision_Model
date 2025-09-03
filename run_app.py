@@ -90,7 +90,7 @@ def load_pipeline_outputs():
 
 
 df, df_model, df_punt_fg, base_pred_df = load_pipeline_outputs()
-
+st.write("datasets loaded")
 
 # Inject CSS once at the top of your app
 st.markdown("""
