@@ -37,7 +37,7 @@ def get_process_data():
     return ProcessData()
 
 process_data = get_process_data()
-df = joblib.load('dataset.pkl')
+df = pd.read_parquet('dataset.parquet', engine='pyarrow')
 model_trainer = ModelTrainer(df)
 model_trainer.model()
 pipeline = RunPipeline(model_trainer.df, mode='realtime')
