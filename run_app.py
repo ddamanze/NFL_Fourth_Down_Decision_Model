@@ -6,7 +6,6 @@ import pandas as pd
 # from process_data import ProcessData
 import joblib
 import streamlit as st
-st.set_page_config(layout="wide")
 import streamlit.components.v1 as components
 import plotly.graph_objects as go
 import json
