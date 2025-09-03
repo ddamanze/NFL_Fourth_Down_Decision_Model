@@ -3,6 +3,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 import joblib
+from joblib import load
 import os
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
@@ -12,6 +13,8 @@ from config import CONFIG
 from process_data import ProcessData
 import logging
 import xgboost as xgb
+import requests
+from io import BytesIO
 from sklearn.metrics import mean_absolute_error, accuracy_score
 
 logger = logging.getLogger(__name__)
@@ -22,6 +25,8 @@ logging.basicConfig(level=logging.INFO)
 # cfg = CONFIG[mode]
 #
 # columns_to_exclude = cfg['exclude_cols']
+model_path_url = "https://github.com/ddamanze/NFL_Fourth_Down_Decision_Model/releases/download/v1.0-datasets/model_{mode}.joblib"
+model_path_conversion_url = "https://github.com/ddamanze/NFL_Fourth_Down_Decision_Model/releases/download/v1.0-datasets/model_path_conversion_probability.joblib"
 
 class ModelTrainer:
     def __init__(self, df: pd.DataFrame, model_path=None, model_path_conversion_probability=None, mode='postgame'):
@@ -32,11 +37,11 @@ class ModelTrainer:
         self.df = pd.DataFrame(df)
         self.mode = mode
         if model_path is None:
-            model_path = f'/Users/ddamanze/PycharmProjects/PythonProject/model_{self.mode}.joblib'
-        self.model_path = model_path
+            model_path = model_path_url.format(mode=mode)
+        self.model = self._load_joblib_from_url(model_path_url)
         if model_path_conversion_probability is None:
-            model_path_conversion_probability = f'/Users/ddamanze/PycharmProjects/PythonProject/model_path_conversion_probability.joblib'
-        self.model_path_conversion_probability = model_path_conversion_probability
+            model_path_conversion_probability = model_path_conversion_url
+        self.model_path_conversion_probability = self._load_joblib_from_url(model_path_conversion_url)
 
         cfg = CONFIG[self.mode]
         columns_to_exclude = cfg['exclude_cols']
@@ -46,27 +51,15 @@ class ModelTrainer:
 
         self.pipeline_model = None
         self.pipeline_conversion_probability = None
-        self.pipeline_field_goal_probability = None
 
-
-        # Option to load the model pipeline if it is already in your local environment
+    @staticmethod
+    def _load_joblib_from_url(url):
         try:
-            self.pipeline_model = joblib.load(model_path)
-            if not isinstance(self.pipeline_model, Pipeline):
-                raise TypeError("Model is not a valid sklearn Pipeline. Check the model file or retrain.")
-            logger.info(f"Model successfully loaded from {self.model_path}")
+            response = requests.get(url)
+            response.raise_for_status()  # Raise an error if download failed
+            return load(BytesIO(response.content))
         except Exception as e:
-            logger.error(f"Error loading model from {model_path}: {e}, retraining...")
-            self.model()
-
-        try:
-            self.pipeline_conversion_probability = joblib.load(model_path_conversion_probability)
-            if not isinstance(self.pipeline_conversion_probability, Pipeline):
-                raise TypeError("Logistic model is not a valid sklearn Pipeline. Check the model file or retrain.")
-            logger.info(f"Model successfully loaded from {self.model_path_conversion_probability}")
-        except Exception as e:
-            logger.error(f"Error loading model from {model_path_conversion_probability}: {e}, retraining...")
-            self.logistic_regression_model()
+            raise RuntimeError(f"Failed to load model from {url}: {e}")
 
     """Tranforms and trains the model to make predictions for post-play win probability."""
     def model(self):
@@ -74,10 +67,6 @@ class ModelTrainer:
             logger.info("Model already loaded. Skipping training.")
             return self.pipeline_model
 
-        if os.path.exists(self.model_path):
-            logger.info(f"Model already loaded. Skipping training. ({self.model_path})")
-            self.pipeline_model = joblib.load(self.model_path)
-            return self.pipeline_model
 
         # Filter columns and preprocess the data
         x = self.df_model.drop(columns=self.columns_to_exclude, axis=1, errors='ignore')
@@ -98,13 +87,6 @@ class ModelTrainer:
         best_params = random_search_cv.best_params_
         logger.info(f"Best model parameters: {best_params}")
 
-        try:
-            # Dumps model training into a joblib in local environment
-            joblib.dump(best_model, self.model_path)
-            logger.info(f"Model training complete and saved as model_{self.mode}.joblib")# Save the trained model
-        except Exception as e:
-            logger.error(f"Failed to save model: {e}")
-            raise
         self.pipeline_model = best_model
         return self.pipeline_model
 
