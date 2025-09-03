@@ -1,8 +1,8 @@
 import pyarrow.parquet as pq
 import pandas as pd
 import logging
-from .data_loader import DataLoader
-from .added_features import (
+from data_loader import DataLoader
+from added_features import (
 week, added_wp, decision_classes, distance_bin, field_position,
 score_difference, fourth_and_one, get_season_year, compute_distance_success_rates,
 average_epa_calculations

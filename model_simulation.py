@@ -1,4 +1,4 @@
-from .config import AVG_PUNT
+from config import AVG_PUNT
 import numpy as np
 
 """Function to simulate a successful 4th down conversion. Assumptions are:
