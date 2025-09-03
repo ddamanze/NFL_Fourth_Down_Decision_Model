@@ -13,7 +13,7 @@ class RunPipeline:
         self.original_df = df
         self.mode = mode
         model_path = 'model_postgame.joblib' if self.mode == 'postgame' else 'model_realtime.joblib'
-        self.model_trainer = ModelTrainer(self.original_df, model_path=model_path, mode=mode)
+        self.model_trainer = ModelTrainer(self.original_df, mode=mode)
         self.mode = self.model_trainer.mode
         self.df_model = self.model_trainer.df_model
         self.df_punt_fg = self.model_trainer.df_punt_fg
