@@ -21,6 +21,7 @@ score_diff_subtraction, add_yardline_100, get_knn_features,
 drive_inside20, game_half, half_seconds_remaining, game_seconds_remaining)
 from config import MODEL_SIMULATION_COLUMNS
 from utils import run_streamlit_preloads, model_misses, scenario_sentence
+from io import BytesIO
 
 client = OpenAI(api_key=st.secrets["api"]["OPENAI_API_KEY"])
 
@@ -36,23 +37,33 @@ def get_process_data():
     from process_data import ProcessData
     return ProcessData()
 
+dataset_url = "https://github.com/ddamanze/NFL_Fourth_Down_Decision_Model/releases/download/v1.0-datasets/dataset.parquet"
+pipeline_df = "https://github.com/ddamanze/NFL_Fourth_Down_Decision_Model/releases/download/v1.0-datasets/pipeline_df.pkl"
+pipeline_df_model = "https://github.com/ddamanze/NFL_Fourth_Down_Decision_Model/releases/download/v1.0-datasets/pipeline_df_model.pkl"
+pipeline_df_punt_fg_url = "https://github.com/ddamanze/NFL_Fourth_Down_Decision_Model/releases/download/v1.0-datasets/pipeline_df_punt_fg.pkl"
+pipeline_base_pred_df = "https://github.com/ddamanze/NFL_Fourth_Down_Decision_Model/releases/download/v1.0-datasets/pipeline_base_pred_df.pkl"
+
+# Download the file
+response_dataset = requests.get(dataset_url)
+response_df = requests.get(pipeline_df)
+response_df_model = requests.get(pipeline_df_model)
+response_df_punt_fg = requests.get(pipeline_df_punt_fg_url)
+response_base_pred_df = requests.get(pipeline_base_pred_df)
+#response.raise_for_status()  # raises error if download failed
+
 process_data = get_process_data()
-df = pd.read_parquet('dataset.parquet', engine='pyarrow')
+df = pd.read_parquet(BytesIO(response_dataset.content), engine='pyarrow')
 model_trainer = ModelTrainer(df)
 model_trainer.model()
 pipeline = RunPipeline(model_trainer.df, mode='realtime')
 pipeline.run_pipeline()
-joblib.dump(pipeline.df, 'pipeline_df.pkl')
-joblib.dump(pipeline.df_model, 'pipeline_df_model.pkl')
-joblib.dump(pipeline.df_punt_fg, 'pipeline_df_punt_fg.pkl')
-joblib.dump(pipeline.base_pred_df, 'pipeline_base_pred_df.pkl')
 
 @st.cache_data
 def load_pipeline_outputs():
-    df = joblib.load('pipeline_df.pkl')
-    df_model = joblib.load('pipeline_df_model.pkl')
-    df_punt_fg = joblib.load('pipeline_df_punt_fg.pkl')
-    base_pred_df = joblib.load('pipeline_base_pred_df.pkl')
+    df = joblib.load(BytesIO(response_df.content))
+    df_model = joblib.load(BytesIO(response_df_model.content))
+    df_punt_fg = joblib.load(BytesIO(response_df_punt_fg.content))
+    base_pred_df = joblib.load(BytesIO(response_base_pred_df.content))
 
     # Ensure expected columns exist
     for col in ['model_recommendation', 'decision_class', 'year']:
