@@ -49,6 +49,8 @@ df = load_data()
 if df.empty:
     st.warning("No data available to display.")
 
+pipeline = RunPipeline(df, mode='realtime')
+pipeline.run_pipeline()
 
 # @st.cache_data
 # def get_process_data():
@@ -83,7 +85,6 @@ def load_pipeline_outputs():
     return outputs["df"], outputs["df_model"], outputs["df_punt_fg"], outputs["base_pred_df"]
 
 df, df_model, df_punt_fg, base_pred_df = load_pipeline_outputs()
-
 
 # Inject CSS once at the top of your app
 st.markdown("""
