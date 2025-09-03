@@ -69,10 +69,10 @@ response_base_pred_df = requests.get(pipeline_base_pred_df)
 
 # process_data = get_process_data()
 # df = pd.read_parquet(BytesIO(response_dataset.content), engine='pyarrow')
-model_trainer = ModelTrainer(df)
-model_trainer.model()
-pipeline = RunPipeline(model_trainer.df, mode='realtime')
-pipeline.run_pipeline()
+# model_trainer = ModelTrainer(df)
+# model_trainer.model()
+# pipeline = RunPipeline(model_trainer.df, mode='realtime')
+# pipeline.run_pipeline()
 
 @st.cache_data
 def load_pipeline_outputs():
