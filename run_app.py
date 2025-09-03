@@ -48,14 +48,12 @@ def load_data():
 df = load_data()
 if df.empty:
     st.warning("No data available to display.")
-else:
-    st.write(df.head())
 
 
-@st.cache_data
-def get_process_data():
-    from process_data import ProcessData
-    return ProcessData()
+# @st.cache_data
+# def get_process_data():
+#     from process_data import ProcessData
+#     return ProcessData()
 
 pipeline_df = "https://github.com/ddamanze/NFL_Fourth_Down_Decision_Model/releases/download/v1.0-datasets/pipeline_df.pkl"
 pipeline_df_model = "https://github.com/ddamanze/NFL_Fourth_Down_Decision_Model/releases/download/v1.0-datasets/pipeline_df_model.pkl"
@@ -69,7 +67,7 @@ response_df_punt_fg = requests.get(pipeline_df_punt_fg_url)
 response_base_pred_df = requests.get(pipeline_base_pred_df)
 #response.raise_for_status()  # raises error if download failed
 
-process_data = get_process_data()
+# process_data = get_process_data()
 # df = pd.read_parquet(BytesIO(response_dataset.content), engine='pyarrow')
 model_trainer = ModelTrainer(df)
 model_trainer.model()
