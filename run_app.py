@@ -49,6 +49,7 @@ df = load_data()
 if df.empty:
     st.warning("No data available to display.")
 
+df = df[df['down'] == 4]
 pipeline = RunPipeline(df, mode='realtime')
 pipeline.run_pipeline()
 
