@@ -23,6 +23,9 @@ from config import MODEL_SIMULATION_COLUMNS
 from utils import run_streamlit_preloads, model_misses, scenario_sentence
 from io import BytesIO
 
+st.set_page_config(page_title="NFL 4th Down Analytics Model", layout="wide")
+st.title("NFL 4th Down Analytics Model")
+
 client = OpenAI(api_key=st.secrets["api"]["OPENAI_API_KEY"])
 
 # @st.cache_data
