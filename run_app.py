@@ -55,7 +55,7 @@ client = OpenAI(api_key=st.secrets["api"]["OPENAI_API_KEY"])
 @st.cache_data
 def cached_run_pipeline(df: pd.DataFrame, mode: str = "realtime"):
     pipeline = RunPipeline(df, mode=mode)
-    return pipeline.run_pipeline(df)
+    return pipeline.run_pipeline()
 
 # post_pred_df = cached_run_pipeline(df, mode='realtime')
 # pipeline.run_pipeline()
