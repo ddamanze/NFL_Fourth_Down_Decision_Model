@@ -52,12 +52,6 @@ client = OpenAI(api_key=st.secrets["api"]["OPENAI_API_KEY"])
 #     st.warning("No data available to display.")
 
 
-@st.cache_resource
-def cached_run_pipeline(df: pd.DataFrame, mode: str = "realtime"):
-    pipeline = RunPipeline(df, mode=mode)
-    return pipeline.run_pipeline()
-
-# post_pred_df = cached_run_pipeline(df, mode='realtime')
 # pipeline.run_pipeline()
 
 # @st.cache_data
@@ -93,6 +87,8 @@ def load_pipeline_outputs():
     return outputs["df"], outputs["df_model"], outputs["df_punt_fg"], outputs["base_pred_df"]
 
 df, df_model, df_punt_fg, base_pred_df = load_pipeline_outputs()
+
+pipeline = RunPipeline(df_model, mode='realtime')
 
 # Inject CSS once at the top of your app
 st.markdown("""
