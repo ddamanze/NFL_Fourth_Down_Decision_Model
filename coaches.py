@@ -6,8 +6,8 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 class Coaches:
-    def __init__(self, pipeline_runner: RunPipeline, latest_season=None):
-        self.df = pipeline_runner.post_pred_df
+    def __init__(self, post_pred_df: pd.DataFrame, latest_season=None):
+        self.df = post_pred_df
         self.coach_stats_df = pd.DataFrame()
         if latest_season is not None:
             self.latest_season = int(latest_season)

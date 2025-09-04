@@ -79,14 +79,13 @@ class ModelTrainer:
         logger.info(f"Categorical columns used: {self.data_cat_cols}")
         return self.data_cat_cols
 
-    @cache_data
+
     def predict(self, df):
         if not isinstance(self.pipeline_model, Pipeline):
             raise TypeError("Model is not a valid sklearn Pipeline.")
         df_ready = df.drop(columns=[col for col in self.columns_to_exclude if col in df.columns])
         return self.pipeline_model.predict(df_ready)
 
-    @cache_data
     def predict_fourth_probability(self, df):
         if not isinstance(self.pipeline_conversion_probability, Pipeline):
             raise TypeError("Model is not a valid sklearn Pipeline.")
@@ -94,6 +93,16 @@ class ModelTrainer:
         probabilities = self.pipeline_conversion_probability.predict_proba(df_ready)
         df_ready['fourth_down_probability'] = probabilities[:, 1]
         return df_ready
+
+    @cache_data
+    def cached_predict(df: pd.DataFrame, mode: str = "postgame"):
+        trainer = ModelTrainer(df, mode=mode)
+        return trainer.predict(df)
+
+    @cache_data
+    def cached_predict_fourth_probability(df: pd.DataFrame, mode: str = "postgame"):
+        trainer = ModelTrainer(df, mode=mode)
+        return trainer.predict_fourth_probability(df)
 
     # def model(self):
     #     x = self.df.drop(columns=COLUMNS_TO_DROP_MODEL, axis=1)

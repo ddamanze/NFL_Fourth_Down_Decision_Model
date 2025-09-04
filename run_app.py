@@ -52,8 +52,13 @@ if df.empty:
     st.warning("No data available to display.")
 
 df = df[df['down'] == 4]
-pipeline = RunPipeline(df, mode='realtime')
-pipeline.run_pipeline()
+@st.cache_data
+def cached_run_pipeline(df: pd.DataFrame, mode: str = "realtime"):
+    pipeline = RunPipeline(df, mode=mode)
+    return pipeline.run_pipeline(df)
+
+post_pred_df = cached_run_pipeline(df, mode='realtime')
+# pipeline.run_pipeline()
 
 # @st.cache_data
 # def get_process_data():
@@ -280,7 +285,7 @@ with tab1:
 
 with tab2:
     selected_year_sidebar = st.selectbox("Select a season", [sorted(df['year'].unique(), reverse=True)[0]])#.tolist())#index = len(years)-1)
-    coaches = Coaches(pipeline_runner=pipeline, latest_season=selected_year_sidebar)
+    coaches = Coaches(post_pred_df=post_pred_df, latest_season=selected_year_sidebar)
 
     coach_stats_df = coaches.coaching_stats()
 
@@ -420,7 +425,7 @@ with tab3:
                                               '4th & Goal 3YD Line'])
     pre_loaded_df = run_streamlit_preloads(df_model, pre_loaded_scenario, pre_loaded_score_diff)
     if st.button("Run Model"):
-        pre_loaded_df = pipeline.run_pipeline(pre_loaded_df)
+        pre_loaded_df = cached_run_pipeline(pre_loaded_df)
         pre_loaded_recommendation = pre_loaded_df['model_recommendation'].iloc[0]
         fourth_down_probability = pre_loaded_df['fourth_down_probability'].iloc[0]
         successful_wp = pre_loaded_df['fourth_success'].iloc[0]
@@ -483,7 +488,7 @@ with tab3:
             knn_batch_df = get_knn_features(df_model, batch_df)
             batch_df = pd.concat([batch_df, knn_batch_df], axis=1)
             batch_df = batch_df[MODEL_SIMULATION_COLUMNS]
-            batch_df = pipeline.run_pipeline(batch_df)
+            batch_df = cached_run_pipeline(batch_df)
             st.download_button("Download Predictions", batch_df.to_csv("4th_down_batch_predictions.csv", index=False))
 
     st.markdown("<div style='margin-bottom: 10px;'></div>", unsafe_allow_html=True)
@@ -562,7 +567,7 @@ with tab3:
             knn_manual_df = get_knn_features(df_model, manual_input_df)
             manual_input_df = pd.concat([manual_input_df, knn_manual_df], axis=1)
             manual_input_df = manual_input_df[MODEL_SIMULATION_COLUMNS]
-            input_pred = pipeline.run_pipeline(manual_input_df)
+            input_pred = cached_run_pipeline(manual_input_df)
             recommendation_str = input_pred['model_recommendation'].iloc[0]
             fourth_down_probability = input_pred['fourth_down_probability'].iloc[0]
             successful_wp = input_pred['fourth_success'].iloc[0]
