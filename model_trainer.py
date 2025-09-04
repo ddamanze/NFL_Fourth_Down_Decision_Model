@@ -34,13 +34,15 @@ model_path_conversion_url = "https://github.com/ddamanze/NFL_Fourth_Down_Decisio
 
 # Cached loader function outside the class
 @cache_resource
-def load_model_from_url(url: str):
+def load_model_from_url(_url: str):
+    """Load joblib model from GitHub release URL, cached by Streamlit."""
     try:
-        response = requests.get(url)
+        response = requests.get(_url)
         response.raise_for_status()
         return joblib.load(BytesIO(response.content))
     except Exception as e:
-        raise RuntimeError(f"Failed to load model from {url}: {e}")
+        raise RuntimeError(f"Failed to load model from {_url}: {e}")
+
 
 class ModelTrainer:
     def __init__(self, df: pd.DataFrame, mode='postgame'):
@@ -62,7 +64,6 @@ class ModelTrainer:
         self.column_filter()
         self.build_transformer()
 
-    @cache_data
     def build_transformer(self):
         if isinstance(self.data_cat_cols, str):
             self.data_cat_cols = [self.data_cat_cols]
@@ -81,30 +82,28 @@ class ModelTrainer:
         logger.info(f"Categorical columns used: {self.data_cat_cols}")
         return self.data_cat_cols
 
-
-    def predict(self, df):
-        if not isinstance(self.pipeline_model, Pipeline):
-            raise TypeError("Model is not a valid sklearn Pipeline.")
+    def predict(self, df: pd.DataFrame):
         df_ready = df.drop(columns=[col for col in self.columns_to_exclude if col in df.columns])
         return self.pipeline_model.predict(df_ready)
 
-    def predict_fourth_probability(self, df):
-        if not isinstance(self.pipeline_conversion_probability, Pipeline):
-            raise TypeError("Model is not a valid sklearn Pipeline.")
+    def predict_fourth_probability(self, df: pd.DataFrame):
         df_ready = df.drop(columns=[col for col in self.columns_to_exclude if col in df.columns])
         probabilities = self.pipeline_conversion_probability.predict_proba(df_ready)
         df_ready['fourth_down_probability'] = probabilities[:, 1]
         return df_ready
 
-    @cache_data
-    def cached_predict(df: pd.DataFrame, mode: str = "postgame"):
-        trainer = ModelTrainer(df, mode=mode)
-        return trainer.predict(df)
 
-    @cache_data
-    def cached_predict_fourth_probability(df: pd.DataFrame, mode: str = "postgame"):
-        trainer = ModelTrainer(df, mode=mode)
-        return trainer.predict_fourth_probability(df)
+# Streamlit-safe cached prediction functions
+@cache_data
+def cached_predict(_df: pd.DataFrame, mode: str = "postgame"):
+    trainer = ModelTrainer(_df, mode=mode)
+    return trainer.predict(_df)
+
+
+@cache_data
+def cached_predict_fourth_probability(_df: pd.DataFrame, mode: str = "postgame"):
+    trainer = ModelTrainer(_df, mode=mode)
+    return trainer.predict_fourth_probability(_df)
 
     # def model(self):
     #     x = self.df.drop(columns=COLUMNS_TO_DROP_MODEL, axis=1)
