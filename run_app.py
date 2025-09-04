@@ -51,7 +51,7 @@ df = load_data()
 if df.empty:
     st.warning("No data available to display.")
 
-df = df[df['down'] == 4]
+df = df[(df['down'] == 4) & (df['year']==2024)]
 @st.cache_data
 def cached_run_pipeline(df: pd.DataFrame, mode: str = "realtime"):
     pipeline = RunPipeline(df, mode=mode)
