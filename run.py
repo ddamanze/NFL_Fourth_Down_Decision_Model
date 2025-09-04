@@ -32,7 +32,7 @@ class RunPipeline:
             df = self.base_df.copy()
 
         # Use cached prediction functions to avoid Streamlit hashing errors
-        input_df = cached_predict_fourth_probability(df, mode=self.mode)
+        input_df = self.model_trainer.predict_fourth_probability(df)
         input_df['fourth_success'] = cached_predict(input_df.apply(transform_inputs_success, axis=1, result_type='expand'), mode=self.mode)
         input_df['fourth_failure'] = cached_predict(input_df.apply(transform_inputs_failure, axis=1, result_type='expand'), mode=self.mode)
 

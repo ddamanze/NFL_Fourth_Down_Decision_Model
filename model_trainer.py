@@ -100,10 +100,10 @@ def cached_predict(_df: pd.DataFrame, mode: str = "postgame"):
     return trainer.predict(_df)
 
 
-@cache_data
-def cached_predict_fourth_probability(_df: pd.DataFrame, mode: str = "postgame"):
-    trainer = ModelTrainer(_df, mode=mode)
-    return trainer.predict_fourth_probability(_df)
+# @cache_data
+# def cached_predict_fourth_probability(_df: pd.DataFrame, mode: str = "postgame"):
+#     trainer = ModelTrainer(_df, mode=mode)
+#     return trainer.predict_fourth_probability(_df)
 
     # def model(self):
     #     x = self.df.drop(columns=COLUMNS_TO_DROP_MODEL, axis=1)
