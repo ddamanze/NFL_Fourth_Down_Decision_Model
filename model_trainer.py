@@ -33,7 +33,7 @@ model_path_conversion_url = "https://github.com/ddamanze/NFL_Fourth_Down_Decisio
 
 
 # Cached loader function outside the class
-@cache_resource
+# @cache_resource
 def load_model_from_url(_url: str):
     """Load joblib model from GitHub release URL, cached by Streamlit."""
     try:
