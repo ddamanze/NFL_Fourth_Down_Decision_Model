@@ -3,7 +3,7 @@ from process_data import ProcessData
 #from utils import compute_distance_success_rates
 from config import CONFIG
 from streamlit import cache_data
-from model_trainer import ModelTrainer, cached_predict, cached_predict_fourth_probability
+from model_trainer import ModelTrainer, cached_predict
 
 from model_simulation import (transform_inputs_success, transform_inputs_failure,
                               transform_inputs_fg_success, transform_inputs_fg_failure,
