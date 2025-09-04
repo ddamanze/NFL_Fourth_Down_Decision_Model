@@ -34,24 +34,24 @@ client = OpenAI(api_key=st.secrets["api"]["OPENAI_API_KEY"])
 
 # data_loader = get_data_loader()
 
-dataset_url = "https://github.com/ddamanze/NFL_Fourth_Down_Decision_Model/releases/download/v1.0-datasets/dataset.parquet"
+# dataset_url = "https://github.com/ddamanze/NFL_Fourth_Down_Decision_Model/releases/download/v1.0-datasets/dataset.parquet"
+#
+# @st.cache_data
+# def load_data():
+#     """Load preprocessed data from GitHub Releases."""
+#     try:
+#         response_dataset = requests.get(dataset_url)
+#         df = pd.read_parquet(BytesIO(response_dataset.content), engine='pyarrow')
+#         return df
+#     except Exception as e:
+#         st.error(f"Failed to load data: {e}")
+#         return pd.DataFrame()
+#
+# df = load_data()
+# if df.empty:
+#     st.warning("No data available to display.")
 
-@st.cache_data
-def load_data():
-    """Load preprocessed data from GitHub Releases."""
-    try:
-        response_dataset = requests.get(dataset_url)
-        df = pd.read_parquet(BytesIO(response_dataset.content), engine='pyarrow')
-        return df
-    except Exception as e:
-        st.error(f"Failed to load data: {e}")
-        return pd.DataFrame()
 
-df = load_data()
-if df.empty:
-    st.warning("No data available to display.")
-
-df = df[(df['down'] == 4)]
 @st.cache_data
 def cached_run_pipeline(df: pd.DataFrame, mode: str = "realtime"):
     pipeline = RunPipeline(df, mode=mode)
