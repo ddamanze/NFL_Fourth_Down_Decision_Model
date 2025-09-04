@@ -421,7 +421,7 @@ with tab3:
                                               '4th & Goal 3YD Line'])
     pre_loaded_df = run_streamlit_preloads(df_model, pre_loaded_scenario, pre_loaded_score_diff)
     if st.button("Run Model"):
-        pre_loaded_df = cached_run_pipeline(pre_loaded_df)
+        pre_loaded_df = pipeline.run_pipeline(pre_loaded_df)
         pre_loaded_recommendation = pre_loaded_df['model_recommendation'].iloc[0]
         fourth_down_probability = pre_loaded_df['fourth_down_probability'].iloc[0]
         successful_wp = pre_loaded_df['fourth_success'].iloc[0]
@@ -484,7 +484,7 @@ with tab3:
             knn_batch_df = get_knn_features(df_model, batch_df)
             batch_df = pd.concat([batch_df, knn_batch_df], axis=1)
             batch_df = batch_df[MODEL_SIMULATION_COLUMNS]
-            batch_df = cached_run_pipeline(batch_df)
+            batch_df = pipeline.run_pipeline(batch_df)
             st.download_button("Download Predictions", batch_df.to_csv("4th_down_batch_predictions.csv", index=False))
 
     st.markdown("<div style='margin-bottom: 10px;'></div>", unsafe_allow_html=True)
@@ -563,7 +563,7 @@ with tab3:
             knn_manual_df = get_knn_features(df_model, manual_input_df)
             manual_input_df = pd.concat([manual_input_df, knn_manual_df], axis=1)
             manual_input_df = manual_input_df[MODEL_SIMULATION_COLUMNS]
-            input_pred = cached_run_pipeline(manual_input_df)
+            input_pred = pipeline.run_pipeline(manual_input_df)
             recommendation_str = input_pred['model_recommendation'].iloc[0]
             fourth_down_probability = input_pred['fourth_down_probability'].iloc[0]
             successful_wp = input_pred['fourth_success'].iloc[0]
