@@ -51,13 +51,13 @@ df = load_data()
 if df.empty:
     st.warning("No data available to display.")
 
-df = df[(df['down'] == 4) & (df['year']==2024)]
+df = df[(df['down'] == 4)]
 @st.cache_data
 def cached_run_pipeline(df: pd.DataFrame, mode: str = "realtime"):
     pipeline = RunPipeline(df, mode=mode)
     return pipeline.run_pipeline(df)
 
-post_pred_df = cached_run_pipeline(df, mode='realtime')
+# post_pred_df = cached_run_pipeline(df, mode='realtime')
 # pipeline.run_pipeline()
 
 # @st.cache_data
@@ -285,7 +285,7 @@ with tab1:
 
 with tab2:
     selected_year_sidebar = st.selectbox("Select a season", [sorted(df['year'].unique(), reverse=True)[0]])#.tolist())#index = len(years)-1)
-    coaches = Coaches(post_pred_df=post_pred_df, latest_season=selected_year_sidebar)
+    coaches = Coaches(post_pred_df=base_pred_df, latest_season=selected_year_sidebar)
 
     coach_stats_df = coaches.coaching_stats()
 
