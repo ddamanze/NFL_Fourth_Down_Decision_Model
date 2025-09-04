@@ -52,13 +52,13 @@ class ModelTrainer:
         self.build_transformer()
 
     @cache_resource
-    def _load_joblib_from_url(url: str):
+    def _load_joblib_from_url(_url: str):
         try:
-            response = requests.get(url, stream=True)
+            response = requests.get(_url, stream=True)
             response.raise_for_status()
             return joblib.load(BytesIO(response.content))
         except Exception as e:
-            raise RuntimeError(f"Failed to load model from {url}: {e}")
+            raise RuntimeError(f"Failed to load model from {_url}: {e}")
 
     @cache_data
     def build_transformer(self):
