@@ -88,10 +88,22 @@ class ModelTrainer:
 
     def predict_fourth_probability(self, df: pd.DataFrame):
         df_ready = df.drop(columns=[col for col in self.columns_to_exclude if col in df.columns])
-        probabilities = self.pipeline_conversion_probability.predict_proba(df_ready)
-        df_ready['fourth_down_probability'] = probabilities[:, 1]
-        return df_ready
 
+        # Get the classifier from the pipeline if it's a Pipeline
+        if hasattr(self.pipeline_conversion_probability, 'predict_proba'):
+            # Already a classifier
+            clf = self.pipeline_conversion_probability
+        elif hasattr(self.pipeline_conversion_probability, 'named_steps'):
+            # Pipeline: get the last step
+            clf = list(self.pipeline_conversion_probability.named_steps.values())[-1]
+        else:
+            raise TypeError("pipeline_conversion_probability is not a valid classifier")
+
+        # Compute probabilities
+        probabilities = clf.predict_proba(df_ready)
+        df_ready['fourth_down_probability'] = probabilities[:, 1]
+
+        return df_ready
 
 # Streamlit-safe cached prediction functions
 # @cache_data
