@@ -41,8 +41,8 @@ class ModelTrainer:
         self.mode = mode
 
         # Load models from GitHub Releases
-        self.pipeline_model = self._load_joblib_from_url(model_path_url.format(mode=self.mode))
-        self.pipeline_conversion_probability = self._load_joblib_from_url(model_path_conversion_url)
+        self.pipeline_model = ModelTrainer._load_joblib_from_url(model_path_url.format(mode=self.mode))
+        self.pipeline_conversion_probability = ModelTrainer._load_joblib_from_url(model_path_conversion_url)
 
         cfg = CONFIG[self.mode]
         self.columns_to_exclude = cfg['exclude_cols']
