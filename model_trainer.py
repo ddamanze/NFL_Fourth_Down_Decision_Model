@@ -31,6 +31,17 @@ logging.basicConfig(level=logging.INFO)
 model_path_url = "https://github.com/ddamanze/NFL_Fourth_Down_Decision_Model/releases/download/v1.0-datasets/model_{mode}.joblib"
 model_path_conversion_url = "https://github.com/ddamanze/NFL_Fourth_Down_Decision_Model/releases/download/v1.0-datasets/model_path_conversion_probability.joblib"
 
+
+# Cached loader function outside the class
+@cache_resource
+def load_model_from_url(url: str):
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        return joblib.load(BytesIO(response.content))
+    except Exception as e:
+        raise RuntimeError(f"Failed to load model from {url}: {e}")
+
 class ModelTrainer:
     def __init__(self, df: pd.DataFrame, mode='postgame'):
         process_data = ProcessData()
@@ -41,8 +52,8 @@ class ModelTrainer:
         self.mode = mode
 
         # Load models from GitHub Releases
-        self.pipeline_model = ModelTrainer._load_joblib_from_url(model_path_url.format(mode=self.mode))
-        self.pipeline_conversion_probability = ModelTrainer._load_joblib_from_url(model_path_conversion_url)
+        self.pipeline_model = load_model_from_url(model_path_url.format(mode=self.mode))
+        self.pipeline_conversion_probability = load_model_from_url(model_path_conversion_url)
 
         cfg = CONFIG[self.mode]
         self.columns_to_exclude = cfg['exclude_cols']
@@ -50,16 +61,6 @@ class ModelTrainer:
         # Column filtering and transformer
         self.column_filter()
         self.build_transformer()
-
-    @staticmethod
-    @cache_resource
-    def _load_joblib_from_url(_url: str):
-        try:
-            response = requests.get(_url, stream=True)
-            response.raise_for_status()
-            return joblib.load(BytesIO(response.content))
-        except Exception as e:
-            raise RuntimeError(f"Failed to load model from {_url}: {e}")
 
     @cache_data
     def build_transformer(self):
