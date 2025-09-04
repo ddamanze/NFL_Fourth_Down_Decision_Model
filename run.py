@@ -33,8 +33,8 @@ class RunPipeline:
 
         # Use cached prediction functions to avoid Streamlit hashing errors
         input_df = self.model_trainer.predict_fourth_probability(df)
-        input_df['fourth_success'] = cached_predict(input_df.apply(transform_inputs_success, axis=1, result_type='expand'), mode=self.mode)
-        input_df['fourth_failure'] = cached_predict(input_df.apply(transform_inputs_failure, axis=1, result_type='expand'), mode=self.mode)
+        input_df['fourth_success'] = self.model_trainer.predict(input_df.apply(transform_inputs_success, axis=1, result_type='expand'), mode=self.mode)
+        input_df['fourth_failure'] = self.model_trainer.predict(input_df.apply(transform_inputs_failure, axis=1, result_type='expand'), mode=self.mode)
 
         input_df.loc[input_df['yardline_100'] == input_df['ydstogo'], 'fourth_success'] = (
             1 - input_df.loc[input_df['yardline_100'] == input_df['ydstogo'], 'fourth_success']
@@ -45,8 +45,8 @@ class RunPipeline:
             input_df['fourth_failure'] * (1 - input_df['fourth_down_probability'])
         )
 
-        input_df['fg_success'] = cached_predict(input_df.apply(transform_inputs_fg_success, axis=1, result_type='expand'), mode=self.mode)
-        input_df['fg_failure'] = cached_predict(input_df.apply(transform_inputs_fg_failure, axis=1, result_type='expand'), mode=self.mode)
+        input_df['fg_success'] = self.model_trainer.predict(input_df.apply(transform_inputs_fg_success, axis=1, result_type='expand'), mode=self.mode)
+        input_df['fg_failure'] = self.model_trainer.predict(input_df.apply(transform_inputs_fg_failure, axis=1, result_type='expand'), mode=self.mode)
         input_df['fg_success'] = 1 - input_df['fg_success']
         input_df['fg_failure'] = 1 - input_df['fg_failure']
         input_df['kick_fg_decision'] = (
@@ -54,7 +54,7 @@ class RunPipeline:
             input_df['fg_failure'] * (1 - input_df['fg_prob'])
         )
 
-        input_df['punt'] = cached_predict(input_df.apply(transform_inputs_punt, axis=1, result_type='expand'), mode=self.mode)
+        input_df['punt'] = self.model_trainer.predict(input_df.apply(transform_inputs_punt, axis=1, result_type='expand'), mode=self.mode)
         input_df['punt'] = 1 - input_df['punt']
 
         input_df['model_recommendation'] = input_df.apply(decision_time, axis=1)

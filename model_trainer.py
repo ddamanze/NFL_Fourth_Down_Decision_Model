@@ -94,10 +94,10 @@ class ModelTrainer:
 
 
 # Streamlit-safe cached prediction functions
-@cache_data
-def cached_predict(_df: pd.DataFrame, mode: str = "postgame"):
-    trainer = ModelTrainer(_df, mode=mode)
-    return trainer.predict(_df)
+# @cache_data
+# def cached_predict(_df: pd.DataFrame, mode: str = "postgame"):
+#     trainer = ModelTrainer(_df, mode=mode)
+#     return trainer.predict(_df)
 
 
 # @cache_data

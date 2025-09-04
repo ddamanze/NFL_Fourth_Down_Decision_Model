@@ -52,7 +52,7 @@ client = OpenAI(api_key=st.secrets["api"]["OPENAI_API_KEY"])
 #     st.warning("No data available to display.")
 
 
-@st.cache_data
+@st.cache_resource
 def cached_run_pipeline(df: pd.DataFrame, mode: str = "realtime"):
     pipeline = RunPipeline(df, mode=mode)
     return pipeline.run_pipeline()
