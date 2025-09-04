@@ -51,6 +51,7 @@ class ModelTrainer:
         self.column_filter()
         self.build_transformer()
 
+    @staticmethod
     @cache_resource
     def _load_joblib_from_url(_url: str):
         try:
