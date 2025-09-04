@@ -2,6 +2,7 @@ import pandas as pd
 from process_data import ProcessData
 #from utils import compute_distance_success_rates
 from config import CONFIG
+from streamlit import cache_data
 from model_trainer import ModelTrainer
 from model_simulation import (transform_inputs_success, transform_inputs_failure,
                               transform_inputs_fg_success, transform_inputs_fg_failure,
@@ -24,7 +25,7 @@ class RunPipeline:
         self.base_pred_df = self.run_pipeline()
         self.post_pred_df = pd.DataFrame()
 
-
+    @cache_data
     def create_base_df(self):
         # Dataframes joined together to include all scenarios of 4th downs, going for it, punt, FG
         base_df = self.df_model[self.df_model['down'] == 4]
@@ -35,6 +36,7 @@ class RunPipeline:
     """Runs pipeline prediction for every simulation and creates a win probability column for each.
     The win probability is flipped in every scenario except a 4th down conversion because the other team
     will be considered as the possessing team. The model predicts the win probability of the possessing team."""
+    @cache_data
     def run_pipeline(self, df: pd.DataFrame = None) -> pd.DataFrame:
         if df is None:
             df = self.base_df.copy()

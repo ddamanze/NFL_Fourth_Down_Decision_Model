@@ -8,6 +8,9 @@ import os
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.model_selection import RandomizedSearchCV
+from streamlit import cache_resource
+from streamlit import cache_data
+
 from utils import param_dist
 from config import CONFIG
 from process_data import ProcessData
@@ -48,15 +51,16 @@ class ModelTrainer:
         self.column_filter()
         self.build_transformer()
 
-    @staticmethod
-    def _load_joblib_from_url(url):
+    @cache_resource
+    def _load_joblib_from_url(url: str):
         try:
-            response = requests.get(url)
+            response = requests.get(url, stream=True)
             response.raise_for_status()
             return joblib.load(BytesIO(response.content))
         except Exception as e:
             raise RuntimeError(f"Failed to load model from {url}: {e}")
 
+    @cache_data
     def build_transformer(self):
         if isinstance(self.data_cat_cols, str):
             self.data_cat_cols = [self.data_cat_cols]
@@ -75,12 +79,14 @@ class ModelTrainer:
         logger.info(f"Categorical columns used: {self.data_cat_cols}")
         return self.data_cat_cols
 
+    @cache_data
     def predict(self, df):
         if not isinstance(self.pipeline_model, Pipeline):
             raise TypeError("Model is not a valid sklearn Pipeline.")
         df_ready = df.drop(columns=[col for col in self.columns_to_exclude if col in df.columns])
         return self.pipeline_model.predict(df_ready)
 
+    @cache_data
     def predict_fourth_probability(self, df):
         if not isinstance(self.pipeline_conversion_probability, Pipeline):
             raise TypeError("Model is not a valid sklearn Pipeline.")

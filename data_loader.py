@@ -1,7 +1,6 @@
 import pyarrow.parquet as pq
 import pandas as pd
 import logging
-import os
 
 from pandas.io.parquet import to_parquet
 
