@@ -75,6 +75,5 @@ class RunPipeline:
             if col not in input_df.columns:
                 input_df[col] = None
 
-        input_df[columns_to_add_back] = df[columns_to_add_back].values
         self.post_pred_df = input_df
         return input_df
