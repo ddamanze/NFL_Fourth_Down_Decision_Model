@@ -119,7 +119,6 @@ tab1, tab2, tab3, tab4 = st.tabs([
     "Scouting Report"
 ])
 
-
 with tab1:
     st.markdown(
         """
@@ -144,22 +143,25 @@ with tab1:
         #                                                                   "Colts go on to win the game."}
         # ],
         "Buccaneers vs. Packers NFC Championship Game Highlights | NFL 2020 Playoffs": [
-            {"label": "🚀 Kicked FG", "timestamp": 645, "description": "Tom Brady vs Aaron Rodgers. 2 minutes left, down by 8. "
-                                                                      "Coach McCarthy decided to kick a FG and the Packers "
-                                                                      "never get the ball back as Tom Brady and the "
-                                                                      "Buccaneers run the clock out.",
+            {"label": "🚀 Kicked FG", "timestamp": 645,
+             "description": "Tom Brady vs Aaron Rodgers. 2 minutes left, down by 8. "
+                            "Coach McCarthy decided to kick a FG and the Packers "
+                            "never get the ball back as Tom Brady and the "
+                            "Buccaneers run the clock out.",
              "play_id": 3728, "game_id": "2020_20_TB_GB", "coach_decision": "Kick FG"}
         ],
         "Detroit Lions vs. San Fransisco 49ers NFC Championship FULL GAME | 2023 NFL Postseason": [
-            {"label": "🚀 4th & 2 Failure", "timestamp": 4565, "description": "The Lions were up 14 in the 3rd quarter with the opportunity to make it a 3 score game. "
-                                                                      "Coach Campbell decided to go for it from the 28 yard line instead of kicking. "
-                                                                      "Some argue that this potentially shifted the momentum of the game to the Niners with a 4th down stop. "
-                                                                      "What did analytics say about this decision?",
-            "play_id": 2682, "game_id": "2023_21_DET_SF", "coach_decision": "Go For It"},
-            {"label": "🚀 4th & 3 Failure", "timestamp": 6271, "description": "The Niners have gained momentum and taken the lead. "
-                                                                             "Detroit has the ball, and it's 4th and 3 from the Niners' 30 yard line. 7 minutes left, down by 3. "
-                                                                      "Coach Campbell decided to go for it once again instead of kicking for the tie. "
-                                                                      "Was this the right call? ",
+            {"label": "🚀 4th & 2 Failure", "timestamp": 4565,
+             "description": "The Lions were up 14 in the 3rd quarter with the opportunity to make it a 3 score game. "
+                            "Coach Campbell decided to go for it from the 28 yard line instead of kicking. "
+                            "Some argue that this potentially shifted the momentum of the game to the Niners with a 4th down stop. "
+                            "What did analytics say about this decision?",
+             "play_id": 2682, "game_id": "2023_21_DET_SF", "coach_decision": "Go For It"},
+            {"label": "🚀 4th & 3 Failure", "timestamp": 6271,
+             "description": "The Niners have gained momentum and taken the lead. "
+                            "Detroit has the ball, and it's 4th and 3 from the Niners' 30 yard line. 7 minutes left, down by 3. "
+                            "Coach Campbell decided to go for it once again instead of kicking for the tie. "
+                            "Was this the right call? ",
              "play_id": 3608, "game_id": "2023_21_DET_SF", "coach_decision": "Go For It"}
 
         ],
@@ -170,6 +172,7 @@ with tab1:
              "play_id": 3334, "game_id": "2024_21_BUF_KC", "coach_decision": "Go For It"}
         ]
     }
+
 
     def get_youtube_videos(api_key, query, key_plays, max_results=1):
         url = "https://www.googleapis.com/youtube/v3/search"
@@ -199,15 +202,15 @@ with tab1:
 
     # Example usage
     api_key = st.secrets["api"]["google_api_key"]
-    queries = [#"Colts Stop the Patriots on 4th & 2",
-               "Buccaneers vs. Packers NFC Championship Game Highlights | NFL 2020 Playoffs",
-               "Detroit Lions vs. San Fransisco 49ers NFC Championship FULL GAME | 2023 NFL Postseason",
-               "Buffalo Bills vs. Kansas City Chiefs FULL GAME | AFC Championship NFL 2024 Season"
-               ]
+    queries = [  # "Colts Stop the Patriots on 4th & 2",
+        "Buccaneers vs. Packers NFC Championship Game Highlights | NFL 2020 Playoffs",
+        "Detroit Lions vs. San Fransisco 49ers NFC Championship FULL GAME | 2023 NFL Postseason",
+        "Buffalo Bills vs. Kansas City Chiefs FULL GAME | AFC Championship NFL 2024 Season"
+    ]
     for query in queries:
         key_plays = query_to_key_plays.get(query, [])  # fallback to empty if none
         videos = get_youtube_videos(api_key, query, key_plays)
-    # Get game and play id to pull decisions for all of these
+        # Get game and play id to pull decisions for all of these
         for video in videos:
             with st.container():
                 # Center image + text
@@ -276,7 +279,7 @@ with tab1:
                                     {model_recommendation}
                                 </div>
                             </div>
-                            
+
                             """,
                             unsafe_allow_html=True
                         )
