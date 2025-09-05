@@ -468,16 +468,7 @@ with tab3:
                 f"with a {round(fg_prob * 100, 2)}% chance of making FG attempt✅"
             )
 
-    if pre_loaded_recommendation is not None:
-        rec = pre_loaded_recommendation
-        if rec == 'Go For It':
-            st.write(f"Model Recommendation: {rec}, with a "
-                     f"{round(fourth_down_probability * 100, 2)}% chance of converting ✅")
-            st.write(f"Win Probability if successful: {round(successful_wp * 100, 2)}%")
-            st.write(f"Win Probability if failed: {round(failure_wp * 100, 2)}%")
-        elif rec == 'Kick FG':
-            st.write(f"Model Recommendation: {rec}, with a "
-                     f"{round(fg_prob * 100, 2)}% chance of making FG attempt✅")
+
         # if pre_loaded_recommendation == 'Go For It':
         #     st.write(f"Model Recommendation: {pre_loaded_recommendation}, with a {round(fourth_down_probability * 100, 2)}% chance of converting ✅")
         #     st.write(f"Win Probability if successful: {round(successful_wp * 100, 2)}%")
