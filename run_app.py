@@ -160,122 +160,85 @@ with tab1:
         unsafe_allow_html=True
     )
 
-    # Query → key plays mapping
-    query_to_key_plays = {
-        "Buccaneers vs. Packers NFC Championship Game Highlights | NFL 2020 Playoffs": [
-            {"label": "🚀 Kicked FG", "timestamp": 645, "description": "Tom Brady vs Aaron Rodgers. 2 minutes left, down by 8. Coach McCarthy decided to kick a FG and the Packers never get the ball back as Tom Brady and the Buccaneers run the clock out.",
-             "play_id": 3728, "game_id": "2020_20_TB_GB", "coach_decision": "Kick FG"}
-        ],
-        "Detroit Lions vs. San Fransisco 49ers NFC Championship FULL GAME | 2023 NFL Postseason": [
-            {"label": "🚀 4th & 2 Failure", "timestamp": 4565, "description": "The Lions were up 14 in the 3rd quarter with the opportunity to make it a 3 score game. Coach Campbell decided to go for it from the 28 yard line instead of kicking. Some argue that this potentially shifted the momentum of the game to the Niners with a 4th down stop.",
-             "play_id": 2682, "game_id": "2023_21_DET_SF", "coach_decision": "Go For It"},
-            {"label": "🚀 4th & 3 Failure", "timestamp": 6271, "description": "The Niners have gained momentum and taken the lead. Detroit has the ball, and it's 4th and 3 from the Niners' 30 yard line. 7 minutes left, down by 3. Coach Campbell decided to go for it once again instead of kicking for the tie.",
-             "play_id": 3608, "game_id": "2023_21_DET_SF", "coach_decision": "Go For It"}
-        ],
-        "Buffalo Bills vs. Kansas City Chiefs FULL GAME | AFC Championship NFL 2024 Season": [
-            {"label": "🚀 4th & 1 Failure", "timestamp": 5035, "description": "Many debate whether or not the Bills got the 1st down, but was it the right decision to go for it?",
-             "play_id": 3334, "game_id": "2024_21_BUF_KC", "coach_decision": "Go For It"}
-        ]
-    }
-
-    # Queries
     queries = [
         "Buccaneers vs. Packers NFC Championship Game Highlights | NFL 2020 Playoffs",
         "Detroit Lions vs. San Fransisco 49ers NFC Championship FULL GAME | 2023 NFL Postseason",
         "Buffalo Bills vs. Kansas City Chiefs FULL GAME | AFC Championship NFL 2024 Season"
     ]
 
-    # Cache YouTube API calls
+    query_to_key_plays = {
+        "Buccaneers vs. Packers NFC Championship Game Highlights | NFL 2020 Playoffs": [
+            {"label": "🚀 Kicked FG", "timestamp": 645,
+             "description": "Tom Brady vs Aaron Rodgers. 2 minutes left, down by 8. Coach McCarthy decided to kick a FG and the Packers never get the ball back as Tom Brady and the Buccaneers run the clock out.",
+             "play_id": 3728, "game_id": "2020_20_TB_GB", "coach_decision": "Kick FG"}
+        ],
+        "Detroit Lions vs. San Fransisco 49ers NFC Championship FULL GAME | 2023 NFL Postseason": [
+            {"label": "🚀 4th & 2 Failure", "timestamp": 4565,
+             "description": "The Lions were up 14 in the 3rd quarter with the opportunity to make it a 3 score game. Coach Campbell decided to go for it from the 28 yard line instead of kicking. Some argue that this potentially shifted the momentum of the game to the Niners with a 4th down stop.",
+             "play_id": 2682, "game_id": "2023_21_DET_SF", "coach_decision": "Go For It"},
+            {"label": "🚀 4th & 3 Failure", "timestamp": 6271,
+             "description": "The Niners have gained momentum and taken the lead. Detroit has the ball, and it's 4th and 3 from the Niners' 30 yard line. 7 minutes left, down by 3. Coach Campbell decided to go for it once again instead of kicking for the tie. Was this the right call?",
+             "play_id": 3608, "game_id": "2023_21_DET_SF", "coach_decision": "Go For It"}
+        ],
+        "Buffalo Bills vs. Kansas City Chiefs FULL GAME | AFC Championship NFL 2024 Season": [
+            {"label": "🚀 4th & 1 Failure", "timestamp": 5035,
+             "description": "Many debate whether or not the Bills got the 1st down, but was it the right decision to go for it?",
+             "play_id": 3334, "game_id": "2024_21_BUF_KC", "coach_decision": "Go For It"}
+        ]
+    }
+
+
     @st.cache_data
-    def get_cached_youtube_videos(api_key, query, key_plays, max_results=1):
+    def get_youtube_video(api_key, query, key_plays):
         url = "https://www.googleapis.com/youtube/v3/search"
-        params = {
-            "part": "snippet",
-            "q": query,
-            "type": "video",
-            "maxResults": max_results,
-            "key": api_key
-        }
-        response = requests.get(url, params=params)
-        data = response.json()
+        params = {"part": "snippet", "q": query, "type": "video", "maxResults": 1, "key": api_key}
+        resp = requests.get(url, params=params).json()
         videos = []
-        for item in data.get("items", []):
-            video_id = item["id"]["videoId"]
+        for item in resp.get("items", []):
+            vid_id = item["id"]["videoId"]
             title = item["snippet"]["title"]
-            thumbnail = item["snippet"]["thumbnails"]["medium"]["url"]
-            videos.append({
-                "title": title,
-                "thumbnail": thumbnail,
-                "video_id": video_id,
-                "key_plays": key_plays
-            })
+            thumb = item["snippet"]["thumbnails"]["medium"]["url"]
+            videos.append({"title": title, "thumbnail": thumb, "video_id": vid_id, "key_plays": key_plays})
         return videos
 
-    # Initialize videos cache in session_state
-    if "videos_cache" not in st.session_state:
-        st.session_state.videos_cache = {}
 
     api_key = st.secrets["api"]["google_api_key"]
 
     for q_idx, query in enumerate(queries):
         key_plays = query_to_key_plays.get(query, [])
-        if query not in st.session_state.videos_cache:
-            st.session_state.videos_cache[query] = get_cached_youtube_videos(api_key, query, key_plays)
-        videos = st.session_state.videos_cache[query]
+        videos = get_youtube_video(api_key, query, key_plays)
 
         for v_idx, video in enumerate(videos):
-            st.image(video["thumbnail"], width=400)
-            st.markdown(f"**{video['title']}**", unsafe_allow_html=True)
+            container = st.container()
+            container.image(video["thumbnail"], width=400)
+            container.markdown(f"**{video['title']}**")
 
             for p_idx, play in enumerate(video["key_plays"]):
-                url = f"https://www.youtube.com/watch?v={video['video_id']}&t={play['timestamp']}"
-                st.markdown(f"{play['description']} - [{play['label']}]({url})", unsafe_allow_html=True)
-
-                # Unique button key per play
+                container.markdown(
+                    f"{play['description']} - [{play['label']}](https://www.youtube.com/watch?v={video['video_id']}&t={play['timestamp']})",
+                    unsafe_allow_html=True)
                 btn_key = f"reveal_{q_idx}_{v_idx}_{p_idx}"
                 if btn_key not in st.session_state:
                     st.session_state[btn_key] = None
-
-                if st.button("Reveal Model Recommendation", key=btn_key):
+                if container.button("Reveal Model Recommendation", key=btn_key):
                     rec_row = base_pred_df[
                         (base_pred_df["play_id"] == play["play_id"]) &
                         (base_pred_df["game_id"] == play["game_id"])
-                    ]
-                    st.session_state[btn_key] = rec_row.iloc[0]["model_recommendation"] if not rec_row.empty else "No recommendation available."
-
-                # Display recommendation if available
+                        ]
+                    st.session_state[btn_key] = rec_row.iloc[0][
+                        "model_recommendation"] if not rec_row.empty else "No recommendation available."
                 if st.session_state[btn_key]:
                     rec = st.session_state[btn_key]
                     if "No recommendation" in rec:
                         color_bg, color_text = "#f8f9fa", "#6c757d"
-                    elif rec.lower() == play.get("coach_decision","").lower():
+                    elif rec.lower() == play.get("coach_decision", "").lower():
                         color_bg, color_text = "#d4edda", "#155724"
                     else:
                         color_bg, color_text = "#f8d7da", "#721c24"
-
-                    st.markdown(
-                        f"""
-                        <div style="display: flex; justify-content: center;">
-                            <div style="
-                                text-align: center;
-                                background-color: {color_bg};
-                                color: {color_text};
-                                font-weight: bold;
-                                font-size: 18px;
-                                padding: 15px;
-                                border-radius: 10px;
-                                box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
-                                margin: 10px auto;
-                                display: inline-block;
-                                max-width: 600px;
-                            ">
-                                {rec}
-                            </div>
-                        </div>
-                        """,
+                    container.markdown(
+                        f"<div style='text-align:center;background:{color_bg};color:{color_text};padding:15px;border-radius:10px;font-weight:bold;margin-top:10px;'>{rec}</div>",
                         unsafe_allow_html=True
                     )
-
 
 with tab2:
     st.session_state.active_tab = 2
