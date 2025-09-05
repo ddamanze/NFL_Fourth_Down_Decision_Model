@@ -113,14 +113,19 @@ st.markdown(
 )
 
 if 'active_tab' not in st.session_state:
-    st.session_state.active_tab = 1
+    st.session_state.active_tab = 0
 
-tab1, tab2, tab3, tab4 = st.tabs([
+tabs = st.tabs([
     "Home Page",
     "Coach Aggression Assessment",
     "4th Down Model Predictor",
     "Scouting Report"
 ])
+tab1, tab2, tab3, tab4 = tabs
+current_tab_index = st.session_state.active_tab
+
+with tabs[current_tab_index]:
+    pass
 
 with tab1:
     st.markdown(
@@ -431,7 +436,7 @@ with tab3:
     # Only regenerate pre_loaded_df if inputs change
     pre_loaded_df = run_streamlit_preloads(df_model, pre_loaded_scenario, pre_loaded_score_diff)
     if st.button("Run Model"):
-        st.session_state.active_tab = 3
+        st.session_state.active_tab = 2
         pre_loaded_df = pipeline.run_pipeline(pre_loaded_df)
         pre_loaded_recommendation = pre_loaded_df['model_recommendation'].iloc[0]
         fourth_down_probability = pre_loaded_df['fourth_down_probability'].iloc[0]
@@ -564,7 +569,7 @@ with tab3:
             submitted = st.form_submit_button(label="Run Model")
 
         if submitted:
-            st.session_state.active_tab = 3
+            st.session_state.active_tab = 2
             manual_input_df = pd.DataFrame({
                 "down": int(down),
                 "ydstogo": int(distance),
@@ -637,7 +642,7 @@ with tab4:
                                           row['yardline_100'], row['decision_class'], row['model_recommendation'],
                                           row['fourth_down_probability']) + "\n"
         if st.button("See Summary"):
-            st.session_state.active_tab = 4
+            st.session_state.active_tab = 3
             with st.spinner("Creating recap with OpenAI..."):
                 response = client.chat.completions.create(
                     model="gpt-4o-mini",
