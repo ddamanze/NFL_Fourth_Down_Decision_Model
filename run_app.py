@@ -470,7 +470,7 @@ with tab3:
             )
 
     if pre_loaded_recommendation is not None:
-        rec = st.session_state.pre_loaded_recommendation
+        rec = pre_loaded_recommendation
         if rec == 'Go For It':
             st.write(f"Model Recommendation: {rec}, with a "
                      f"{round(fourth_down_probability * 100, 2)}% chance of converting ✅")
