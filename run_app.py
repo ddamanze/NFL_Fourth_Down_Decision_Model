@@ -616,7 +616,7 @@ with tab3:
             fourth_down_probability = input_pred['fourth_down_probability'].iloc[0]
             successful_wp = input_pred['fourth_success'].iloc[0]
             failure_wp = input_pred['fourth_failure'].iloc[0]
-            fg_prob = pre_loaded_df['fg_prob'].iloc[0]
+            fg_prob = input_pred['fg_prob'].iloc[0]
 
             if recommendation_str == "Go For It":
                 st.write(f"Model Recommendation: {recommendation_str}, with a {round(fourth_down_probability * 100)}% chance of converting.")
