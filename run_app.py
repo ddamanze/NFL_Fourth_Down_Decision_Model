@@ -208,7 +208,10 @@ with tab1:
         return videos
 
 
-    # Example usage
+    @st.cache_data
+    def get_videos_cached(api_key, query, key_plays):
+        return get_youtube_videos(api_key, query, key_plays)
+
     api_key = st.secrets["api"]["google_api_key"]
     queries = [  # "Colts Stop the Patriots on 4th & 2",
         "Buccaneers vs. Packers NFC Championship Game Highlights | NFL 2020 Playoffs",
@@ -217,7 +220,7 @@ with tab1:
     ]
     for query in queries:
         key_plays = query_to_key_plays.get(query, [])  # fallback to empty if none
-        videos = get_youtube_videos(api_key, query, key_plays)
+        videos = get_videos_cached(api_key, query, key_plays)
         # Get game and play id to pull decisions for all of these
         for video in videos:
             with st.container():
@@ -607,7 +610,7 @@ with tab3:
                 st.write(f"Win Probability if successful: {round(successful_wp * 100, 2)}%")
                 st.write(f"Win Probability if failed: {round(failure_wp * 100, 2)}%")
             elif recommendation_str == "Kick FG":
-                st.write(f"Model Recommendation: {recommendation_str}, with a {round(fourth_down_probability * 100)}% chance of converting.")
+                st.write(f"Model Recommendation: {recommendation_str}")#, with a {round(fourth_down_probability * 100)}% chance of converting.")
 
 with tab4:
     st.markdown("Select Weekly Recap to see the most aggressive and conservative coaching decisions. Select Coaches to see a coach's most aggressive and conservative during the season.")
