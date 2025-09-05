@@ -566,7 +566,6 @@ with tab3:
 
         if submitted:
             st.session_state.active_tab = 3
-            st.experimental_rerun()
             manual_input_df = pd.DataFrame({
                 "down": int(down),
                 "ydstogo": int(distance),
@@ -640,7 +639,6 @@ with tab4:
                                           row['fourth_down_probability']) + "\n"
         if st.button("See Summary"):
             st.session_state.active_tab = 4
-            st.experimental_rerun()
             with st.spinner("Creating recap with OpenAI..."):
                 response = client.chat.completions.create(
                     model="gpt-4o-mini",
@@ -719,7 +717,6 @@ with tab4:
                                           row['fourth_down_probability']) + "\n"
         if st.button("See Summary"):
             st.session_state.active_tab = 4
-            st.experimental_rerun()
             with st.spinner("Creating recap with OpenAI..."):
                 response = client.chat.completions.create(
                     model="gpt-4o-mini",
