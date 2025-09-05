@@ -65,6 +65,16 @@ class RunPipeline:
             'home_team','away_team','home_wp_post','away_wp_post','home_coach','away_coach',
             'two_point_attempt','distance_success_rate','fourth_down_converted','play_type'
         ]
+
+        # Add back only the columns that exist
+        valid_cols = [c for c in columns_to_add_back if c in df.columns]
+        input_df[valid_cols] = df[valid_cols].values
+
+        # Fill the missing ones with None
+        for col in columns_to_add_back:
+            if col not in input_df.columns:
+                input_df[col] = None
+
         input_df[columns_to_add_back] = df[columns_to_add_back].values
         self.post_pred_df = input_df
         return input_df

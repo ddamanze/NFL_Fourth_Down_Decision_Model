@@ -112,13 +112,38 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+if 'active_tab' not in st.session_state:
+    st.session_state.active_tab = 1
+
+if 'pre_loaded_df' not in st.session_state:
+    st.session_state.pre_loaded_df = None
+
+if 'pre_loaded_recommendation' not in st.session_state:
+    st.session_state.pre_loaded_recommendation = None
+
+if 'fourth_down_probability' not in st.session_state:
+    st.session_state.fourth_down_probability = None
+
+if 'successful_wp' not in st.session_state:
+    st.session_state.successful_wp = None
+
+if 'failure_wp' not in st.session_state:
+    st.session_state.failure_wp = None
+
+if 'fg_prob' not in st.session_state:
+    st.session_state.fg_prob = None
+
 tab1, tab2, tab3, tab4 = st.tabs([
     "Home Page",
     "Coach Aggression Assessment",
     "4th Down Model Predictor",
     "Scouting Report"
 ])
+
+selected_tab = st.session_state.active_tab
+
 with tab1:
+    st.session_state.active_tab = 1
     st.markdown(
         """
         <div style="text-align: center; margin: auto; padding: 20px;">
@@ -280,6 +305,7 @@ with tab1:
                         )
 
 with tab2:
+    st.session_state.active_tab = 2
     selected_year_sidebar = st.selectbox("Select a season", [sorted(df['year'].unique(), reverse=True)[0]])#.tolist())#index = len(years)-1)
     coaches = Coaches(post_pred_df=base_pred_df, latest_season=selected_year_sidebar)
 
@@ -379,6 +405,7 @@ with tab2:
     st.dataframe(coach_stats_df)
 
 with tab3:
+    st.session_state.active_tab = 3
     st.markdown("""
         <style>
         .help-icon {
@@ -419,20 +446,41 @@ with tab3:
                                               '4th & short in FG Range',
                                               '4th & 1 in FG Range',
                                               '4th & Goal 3YD Line'])
-    pre_loaded_df = run_streamlit_preloads(df_model, pre_loaded_scenario, pre_loaded_score_diff)
+
+    # Only regenerate pre_loaded_df if inputs change
+    if (st.session_state.pre_loaded_df is None or
+            st.session_state.pre_loaded_score_diff != pre_loaded_score_diff or
+            st.session_state.pre_loaded_scenario != pre_loaded_scenario):
+        st.session_state.pre_loaded_df = run_streamlit_preloads(
+            df_model, pre_loaded_scenario, pre_loaded_score_diff
+        )
+        st.session_state.pre_loaded_score_diff = pre_loaded_score_diff
+        st.session_state.pre_loaded_scenario = pre_loaded_scenario
+
     if st.button("Run Model"):
-        pre_loaded_df = pipeline.run_pipeline(pre_loaded_df)
-        pre_loaded_recommendation = pre_loaded_df['model_recommendation'].iloc[0]
-        fourth_down_probability = pre_loaded_df['fourth_down_probability'].iloc[0]
-        successful_wp = pre_loaded_df['fourth_success'].iloc[0]
-        failure_wp = pre_loaded_df['fourth_failure'].iloc[0]
-        fg_prob = pre_loaded_df['fg_prob'].iloc[0]
-        if pre_loaded_recommendation == 'Go For It':
-            st.write(f"Model Recommendation: {pre_loaded_recommendation}, with a {round(fourth_down_probability * 100, 2)}% chance of converting ✅")
-            st.write(f"Win Probability if successful: {round(successful_wp * 100, 2)}%")
-            st.write(f"Win Probability if failed: {round(failure_wp * 100, 2)}%")
-        elif pre_loaded_recommendation == 'Kick FG':
-            st.write(f"Model Recommendation: {pre_loaded_recommendation}, with a {round(fg_prob * 100, 2)}% chance of making FG attempt✅")
+        st.session_state.pre_loaded_df = pipeline.run_pipeline(st.session_state.pre_loaded_df)
+        st.session_state.pre_loaded_recommendation = st.session_state.pre_loaded_df['model_recommendation'].iloc[0]
+        st.session_state.fourth_down_probability = st.session_state.pre_loaded_df['fourth_down_probability'].iloc[0]
+        st.session_state.successful_wp = st.session_state.pre_loaded_df['fourth_success'].iloc[0]
+        st.session_state.failure_wp = st.session_state.pre_loaded_df['fourth_failure'].iloc[0]
+        st.session_state.fg_prob = st.session_state.pre_loaded_df['fg_prob'].iloc[0]
+
+    if st.session_state.pre_loaded_recommendation is not None:
+        rec = st.session_state.pre_loaded_recommendation
+        if rec == 'Go For It':
+            st.write(f"Model Recommendation: {rec}, with a "
+                     f"{round(st.session_state.fourth_down_probability * 100, 2)}% chance of converting ✅")
+            st.write(f"Win Probability if successful: {round(st.session_state.successful_wp * 100, 2)}%")
+            st.write(f"Win Probability if failed: {round(st.session_state.failure_wp * 100, 2)}%")
+        elif rec == 'Kick FG':
+            st.write(f"Model Recommendation: {rec}, with a "
+                     f"{round(st.session_state.fg_prob * 100, 2)}% chance of making FG attempt✅")
+        # if pre_loaded_recommendation == 'Go For It':
+        #     st.write(f"Model Recommendation: {pre_loaded_recommendation}, with a {round(fourth_down_probability * 100, 2)}% chance of converting ✅")
+        #     st.write(f"Win Probability if successful: {round(successful_wp * 100, 2)}%")
+        #     st.write(f"Win Probability if failed: {round(failure_wp * 100, 2)}%")
+        # elif pre_loaded_recommendation == 'Kick FG':
+        #     st.write(f"Model Recommendation: {pre_loaded_recommendation}, with a {round(fg_prob * 100, 2)}% chance of making FG attempt✅")
 
     with st.container():
         st.markdown("""
@@ -578,6 +626,7 @@ with tab3:
                 st.write(f"Model Recommendation: {recommendation_str}, with a {round(fourth_down_probability * 100)}% chance of converting.")
 
 with tab4:
+    st.session_state.active_tab = 4
     st.markdown("Select Weekly Recap to see the most aggressive and conservative coaching decisions. Select Coaches to see a coach's most aggressive and conservative during the season.")
     scout_mode = st.selectbox("Scout Mode", ["Weekly Recap","Coaches"])
     if scout_mode == "Weekly Recap":
@@ -610,6 +659,7 @@ with tab4:
                                           row['yardline_100'], row['decision_class'], row['model_recommendation'],
                                           row['fourth_down_probability']) + "\n"
         if st.button("See Summary"):
+            st.session_state.active_tab = 4
             with st.spinner("Creating recap with OpenAI..."):
                 response = client.chat.completions.create(
                     model="gpt-4o-mini",
@@ -640,7 +690,7 @@ with tab4:
                         {"role": "user", "content": recap_text}
                     ],
                     temperature=0.7,
-                    max_tokens=500
+                    max_tokens=1000
                 )
                 ai_recap = response.choices[0].message.content
 
@@ -687,6 +737,7 @@ with tab4:
                                           row['yardline_100'], row['decision_class'], row['model_recommendation'],
                                           row['fourth_down_probability']) + "\n"
         if st.button("See Summary"):
+            st.session_state.active_tab = 4
             with st.spinner("Creating recap with OpenAI..."):
                 response = client.chat.completions.create(
                     model="gpt-4o-mini",
