@@ -112,27 +112,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-if 'active_tab' not in st.session_state:
-    st.session_state.active_tab = 1
-
-if 'pre_loaded_df' not in st.session_state:
-    st.session_state.pre_loaded_df = None
-
-if 'pre_loaded_recommendation' not in st.session_state:
-    st.session_state.pre_loaded_recommendation = None
-
-if 'fourth_down_probability' not in st.session_state:
-    st.session_state.fourth_down_probability = None
-
-if 'successful_wp' not in st.session_state:
-    st.session_state.successful_wp = None
-
-if 'failure_wp' not in st.session_state:
-    st.session_state.failure_wp = None
-
-if 'fg_prob' not in st.session_state:
-    st.session_state.fg_prob = None
-
 tab1, tab2, tab3, tab4 = st.tabs([
     "Home Page",
     "Coach Aggression Assessment",
@@ -140,7 +119,6 @@ tab1, tab2, tab3, tab4 = st.tabs([
     "Scouting Report"
 ])
 
-selected_tab = st.session_state.active_tab
 
 with tab1:
     st.markdown(
