@@ -159,13 +159,6 @@ with tab1:
     )
 
     query_to_key_plays = {
-        # "Colts Stop the Patriots on 4th & 2": [
-        #     {"label": "🚀 4th & 2 Failure", "timestamp": 1, "description": "A decision many people believe "
-        #                                                                   "sparked the start of the 4th down decision "
-        #                                                                   "debates. Tom Brady vs Peyton Manning. Coach Belicheck "
-        #                                                                   "decides to roll the dice and go for it. Manning and the "
-        #                                                                   "Colts go on to win the game."}
-        # ],
         "Buccaneers vs. Packers NFC Championship Game Highlights | NFL 2020 Playoffs": [
             {"label": "🚀 Kicked FG", "timestamp": 645, "description": "Tom Brady vs Aaron Rodgers. 2 minutes left, down by 8. "
                                                                       "Coach McCarthy decided to kick a FG and the Packers "
@@ -184,7 +177,6 @@ with tab1:
                                                                       "Coach Campbell decided to go for it once again instead of kicking for the tie. "
                                                                       "Was this the right call? ",
              "play_id": 3608, "game_id": "2023_21_DET_SF", "coach_decision": "Go For It"}
-
         ],
         "Buffalo Bills vs. Kansas City Chiefs FULL GAME | AFC Championship NFL 2024 Season": [
             {"label": "🚀 4th & 1 Failure", "timestamp": 5035, "description": "Many debate whether or not the Bills "
@@ -219,21 +211,25 @@ with tab1:
             })
         return videos
 
+    # Ensure session state dict for revealed recs
+    if "revealed_recommendations" not in st.session_state:
+        st.session_state.revealed_recommendations = {}
 
     # Example usage
     api_key = st.secrets["api"]["google_api_key"]
-    queries = [#"Colts Stop the Patriots on 4th & 2",
-               "Buccaneers vs. Packers NFC Championship Game Highlights | NFL 2020 Playoffs",
-               "Detroit Lions vs. San Fransisco 49ers NFC Championship FULL GAME | 2023 NFL Postseason",
-               "Buffalo Bills vs. Kansas City Chiefs FULL GAME | AFC Championship NFL 2024 Season"
-               ]
-    for query in queries:
-        key_plays = query_to_key_plays.get(query, [])  # fallback to empty if none
+    queries = [
+        "Buccaneers vs. Packers NFC Championship Game Highlights | NFL 2020 Playoffs",
+        "Detroit Lions vs. San Fransisco 49ers NFC Championship FULL GAME | 2023 NFL Postseason",
+        "Buffalo Bills vs. Kansas City Chiefs FULL GAME | AFC Championship NFL 2024 Season"
+    ]
+
+    for q_idx, query in enumerate(queries):
+        key_plays = query_to_key_plays.get(query, [])
         videos = get_youtube_videos(api_key, query, key_plays)
-    # Get game and play id to pull decisions for all of these
-        for video in videos:
+
+        for v_idx, video in enumerate(videos):
             with st.container():
-                # Center image + text
+                # Video block
                 st.markdown(
                     f"""
                     <div style="text-align: center; padding: 15px 0;">
@@ -244,8 +240,8 @@ with tab1:
                     unsafe_allow_html=True
                 )
 
-                # Center key plays
-                for play in video["key_plays"]:
+                # Plays inside video
+                for p_idx, play in enumerate(video["key_plays"]):
                     url = f"https://www.youtube.com/watch?v={video['video_id']}&t={play['timestamp']}"
                     st.markdown(
                         f"""
@@ -257,27 +253,34 @@ with tab1:
                         unsafe_allow_html=True
                     )
 
-                    # --- Reveal button ---
+                    # Unique key per button
+                    btn_key = f"reveal_{q_idx}_{v_idx}_{p_idx}"
 
-                    if st.button("Reveal Model Recommendation", key=f"{video['title']}_{play['label']}"):
+                    if st.button("Reveal Model Recommendation", key=btn_key):
                         rec_row = base_pred_df[
                             (base_pred_df["play_id"] == play["play_id"]) &
                             (base_pred_df["game_id"] == play["game_id"])
-                            ]
+                        ]
                         if not rec_row.empty:
                             model_recommendation = rec_row.iloc[0]["model_recommendation"]
                         else:
                             model_recommendation = "No recommendation available."
 
-                        # Determine color based on alignment
+                        st.session_state.revealed_recommendations[btn_key] = model_recommendation
+
+                    # Show recommendation if revealed
+                    if btn_key in st.session_state.revealed_recommendations:
+                        model_recommendation = st.session_state.revealed_recommendations[btn_key]
+
+                        # Style based on alignment
                         if "No recommendation" in model_recommendation:
-                            color_bg = "#f8f9fa"  # neutral light gray
+                            color_bg = "#f8f9fa"  # neutral
                             color_text = "#6c757d"
                         elif model_recommendation.lower() == play.get("coach_decision", "").lower():
-                            color_bg = "#d4edda"  # light green
+                            color_bg = "#d4edda"  # green
                             color_text = "#155724"
                         else:
-                            color_bg = "#f8d7da"  # light red
+                            color_bg = "#f8d7da"  # red
                             color_text = "#721c24"
 
                         st.markdown(
@@ -299,7 +302,6 @@ with tab1:
                                     {model_recommendation}
                                 </div>
                             </div>
-                            
                             """,
                             unsafe_allow_html=True
                         )
