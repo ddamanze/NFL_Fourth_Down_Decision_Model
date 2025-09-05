@@ -144,6 +144,8 @@ selected_tab = st.session_state.active_tab
 
 with tab1:
     st.session_state.active_tab = 1
+
+    # Intro text
     st.markdown(
         """
         <div style="text-align: center; margin: auto; padding: 20px;">
@@ -158,35 +160,34 @@ with tab1:
         unsafe_allow_html=True
     )
 
+    # Query → key plays mapping
     query_to_key_plays = {
         "Buccaneers vs. Packers NFC Championship Game Highlights | NFL 2020 Playoffs": [
-            {"label": "🚀 Kicked FG", "timestamp": 645, "description": "Tom Brady vs Aaron Rodgers. 2 minutes left, down by 8. "
-                                                                      "Coach McCarthy decided to kick a FG and the Packers "
-                                                                      "never get the ball back as Tom Brady and the "
-                                                                      "Buccaneers run the clock out.",
+            {"label": "🚀 Kicked FG", "timestamp": 645, "description": "Tom Brady vs Aaron Rodgers. 2 minutes left, down by 8. Coach McCarthy decided to kick a FG and the Packers never get the ball back as Tom Brady and the Buccaneers run the clock out.",
              "play_id": 3728, "game_id": "2020_20_TB_GB", "coach_decision": "Kick FG"}
         ],
         "Detroit Lions vs. San Fransisco 49ers NFC Championship FULL GAME | 2023 NFL Postseason": [
-            {"label": "🚀 4th & 2 Failure", "timestamp": 4565, "description": "The Lions were up 14 in the 3rd quarter with the opportunity to make it a 3 score game. "
-                                                                      "Coach Campbell decided to go for it from the 28 yard line instead of kicking. "
-                                                                      "Some argue that this potentially shifted the momentum of the game to the Niners with a 4th down stop. "
-                                                                      "What did analytics say about this decision?",
-            "play_id": 2682, "game_id": "2023_21_DET_SF", "coach_decision": "Go For It"},
-            {"label": "🚀 4th & 3 Failure", "timestamp": 6271, "description": "The Niners have gained momentum and taken the lead. "
-                                                                             "Detroit has the ball, and it's 4th and 3 from the Niners' 30 yard line. 7 minutes left, down by 3. "
-                                                                      "Coach Campbell decided to go for it once again instead of kicking for the tie. "
-                                                                      "Was this the right call? ",
+            {"label": "🚀 4th & 2 Failure", "timestamp": 4565, "description": "The Lions were up 14 in the 3rd quarter with the opportunity to make it a 3 score game. Coach Campbell decided to go for it from the 28 yard line instead of kicking. Some argue that this potentially shifted the momentum of the game to the Niners with a 4th down stop.",
+             "play_id": 2682, "game_id": "2023_21_DET_SF", "coach_decision": "Go For It"},
+            {"label": "🚀 4th & 3 Failure", "timestamp": 6271, "description": "The Niners have gained momentum and taken the lead. Detroit has the ball, and it's 4th and 3 from the Niners' 30 yard line. 7 minutes left, down by 3. Coach Campbell decided to go for it once again instead of kicking for the tie.",
              "play_id": 3608, "game_id": "2023_21_DET_SF", "coach_decision": "Go For It"}
         ],
         "Buffalo Bills vs. Kansas City Chiefs FULL GAME | AFC Championship NFL 2024 Season": [
-            {"label": "🚀 4th & 1 Failure", "timestamp": 5035, "description": "Many debate whether or not the Bills "
-                                                                             "got the 1st down, but was it the right "
-                                                                             "decision to go for it?",
+            {"label": "🚀 4th & 1 Failure", "timestamp": 5035, "description": "Many debate whether or not the Bills got the 1st down, but was it the right decision to go for it?",
              "play_id": 3334, "game_id": "2024_21_BUF_KC", "coach_decision": "Go For It"}
         ]
     }
 
-    def get_youtube_videos(api_key, query, key_plays, max_results=1):
+    # Queries
+    queries = [
+        "Buccaneers vs. Packers NFC Championship Game Highlights | NFL 2020 Playoffs",
+        "Detroit Lions vs. San Fransisco 49ers NFC Championship FULL GAME | 2023 NFL Postseason",
+        "Buffalo Bills vs. Kansas City Chiefs FULL GAME | AFC Championship NFL 2024 Season"
+    ]
+
+    # Cache YouTube API calls
+    @st.cache_data
+    def get_cached_youtube_videos(api_key, query, key_plays, max_results=1):
         url = "https://www.googleapis.com/youtube/v3/search"
         params = {
             "part": "snippet",
@@ -202,7 +203,6 @@ with tab1:
             video_id = item["id"]["videoId"]
             title = item["snippet"]["title"]
             thumbnail = item["snippet"]["thumbnails"]["medium"]["url"]
-
             videos.append({
                 "title": title,
                 "thumbnail": thumbnail,
@@ -211,100 +211,71 @@ with tab1:
             })
         return videos
 
-    # Ensure session state dict for revealed recs
-    if "revealed_recommendations" not in st.session_state:
-        st.session_state.revealed_recommendations = {}
+    # Initialize videos cache in session_state
+    if "videos_cache" not in st.session_state:
+        st.session_state.videos_cache = {}
 
-    # Example usage
     api_key = st.secrets["api"]["google_api_key"]
-    queries = [
-        "Buccaneers vs. Packers NFC Championship Game Highlights | NFL 2020 Playoffs",
-        "Detroit Lions vs. San Fransisco 49ers NFC Championship FULL GAME | 2023 NFL Postseason",
-        "Buffalo Bills vs. Kansas City Chiefs FULL GAME | AFC Championship NFL 2024 Season"
-    ]
 
     for q_idx, query in enumerate(queries):
         key_plays = query_to_key_plays.get(query, [])
-        videos = get_youtube_videos(api_key, query, key_plays)
+        if query not in st.session_state.videos_cache:
+            st.session_state.videos_cache[query] = get_cached_youtube_videos(api_key, query, key_plays)
+        videos = st.session_state.videos_cache[query]
 
         for v_idx, video in enumerate(videos):
-            with st.container():
-                # Video block
-                st.markdown(
-                    f"""
-                    <div style="text-align: center; padding: 15px 0;">
-                        <img src="{video['thumbnail']}" width="400"><br>
-                        <strong>{video['title']}</strong>
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
+            st.image(video["thumbnail"], width=400)
+            st.markdown(f"**{video['title']}**", unsafe_allow_html=True)
 
-                # Plays inside video
-                for p_idx, play in enumerate(video["key_plays"]):
-                    url = f"https://www.youtube.com/watch?v={video['video_id']}&t={play['timestamp']}"
+            for p_idx, play in enumerate(video["key_plays"]):
+                url = f"https://www.youtube.com/watch?v={video['video_id']}&t={play['timestamp']}"
+                st.markdown(f"{play['description']} - [{play['label']}]({url})", unsafe_allow_html=True)
+
+                # Unique button key per play
+                btn_key = f"reveal_{q_idx}_{v_idx}_{p_idx}"
+                if btn_key not in st.session_state:
+                    st.session_state[btn_key] = None
+
+                if st.button("Reveal Model Recommendation", key=btn_key):
+                    rec_row = base_pred_df[
+                        (base_pred_df["play_id"] == play["play_id"]) &
+                        (base_pred_df["game_id"] == play["game_id"])
+                    ]
+                    st.session_state[btn_key] = rec_row.iloc[0]["model_recommendation"] if not rec_row.empty else "No recommendation available."
+
+                # Display recommendation if available
+                if st.session_state[btn_key]:
+                    rec = st.session_state[btn_key]
+                    if "No recommendation" in rec:
+                        color_bg, color_text = "#f8f9fa", "#6c757d"
+                    elif rec.lower() == play.get("coach_decision","").lower():
+                        color_bg, color_text = "#d4edda", "#155724"
+                    else:
+                        color_bg, color_text = "#f8d7da", "#721c24"
+
                     st.markdown(
                         f"""
-                        <div style="text-align: center; padding: 10px 10px;">
-                            {play['description']}<br>
-                            - <a href="{url}" target="_blank">{play['label']}</a>
+                        <div style="display: flex; justify-content: center;">
+                            <div style="
+                                text-align: center;
+                                background-color: {color_bg};
+                                color: {color_text};
+                                font-weight: bold;
+                                font-size: 18px;
+                                padding: 15px;
+                                border-radius: 10px;
+                                box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
+                                margin: 10px auto;
+                                display: inline-block;
+                                max-width: 600px;
+                            ">
+                                {rec}
+                            </div>
                         </div>
                         """,
                         unsafe_allow_html=True
                     )
 
-                    # Unique key per button
-                    btn_key = f"reveal_{q_idx}_{v_idx}_{p_idx}"
-
-                    if st.button("Reveal Model Recommendation", key=btn_key):
-                        rec_row = base_pred_df[
-                            (base_pred_df["play_id"] == play["play_id"]) &
-                            (base_pred_df["game_id"] == play["game_id"])
-                        ]
-                        if not rec_row.empty:
-                            model_recommendation = rec_row.iloc[0]["model_recommendation"]
-                        else:
-                            model_recommendation = "No recommendation available."
-
-                        st.session_state.revealed_recommendations[btn_key] = model_recommendation
-
-                    # Show recommendation if revealed
-                    if btn_key in st.session_state.revealed_recommendations:
-                        model_recommendation = st.session_state.revealed_recommendations[btn_key]
-
-                        # Style based on alignment
-                        if "No recommendation" in model_recommendation:
-                            color_bg = "#f8f9fa"  # neutral
-                            color_text = "#6c757d"
-                        elif model_recommendation.lower() == play.get("coach_decision", "").lower():
-                            color_bg = "#d4edda"  # green
-                            color_text = "#155724"
-                        else:
-                            color_bg = "#f8d7da"  # red
-                            color_text = "#721c24"
-
-                        st.markdown(
-                            f"""
-                            <div style="display: flex; justify-content: center;">
-                                <div style="
-                                    text-align: center;
-                                    background-color: {color_bg};
-                                    color: {color_text};
-                                    font-weight: bold;
-                                    font-size: 18px;
-                                    padding: 15px;
-                                    border-radius: 10px;
-                                    box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
-                                    margin: 10px auto;
-                                    display: inline-block;
-                                    max-width: 600px;
-                                ">
-                                    {model_recommendation}
-                                </div>
-                            </div>
-                            """,
-                            unsafe_allow_html=True
-                        )
 
 with tab2:
     st.session_state.active_tab = 2
