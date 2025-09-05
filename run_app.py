@@ -432,7 +432,6 @@ with tab3:
     pre_loaded_df = run_streamlit_preloads(df_model, pre_loaded_scenario, pre_loaded_score_diff)
     if st.button("Run Model"):
         st.session_state.active_tab = 3
-        st.experimental_rerun()
         pre_loaded_df = pipeline.run_pipeline(pre_loaded_df)
         pre_loaded_recommendation = pre_loaded_df['model_recommendation'].iloc[0]
         fourth_down_probability = pre_loaded_df['fourth_down_probability'].iloc[0]
