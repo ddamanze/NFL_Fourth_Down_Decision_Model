@@ -27,46 +27,14 @@ st.title("NFL 4th Down Analytics Model")
 
 client = OpenAI(api_key=st.secrets["api"]["OPENAI_API_KEY"])
 
-# @st.cache_data
-# def get_data_loader():
-#     from data_loader import DataLoader
-#     return DataLoader()
-
-# data_loader = get_data_loader()
-
-# dataset_url = "https://github.com/ddamanze/NFL_Fourth_Down_Decision_Model/releases/download/v1.0-datasets/dataset.parquet"
-#
-# @st.cache_data
-# def load_data():
-#     """Load preprocessed data from GitHub Releases."""
-#     try:
-#         response_dataset = requests.get(dataset_url)
-#         df = pd.read_parquet(BytesIO(response_dataset.content), engine='pyarrow')
-#         return df
-#     except Exception as e:
-#         st.error(f"Failed to load data: {e}")
-#         return pd.DataFrame()
-#
-# df = load_data()
-# if df.empty:
-#     st.warning("No data available to display.")
-
-
-# pipeline.run_pipeline()
-
-# @st.cache_data
-# def get_process_data():
-#     from process_data import ProcessData
-#     return ProcessData()
-
 pipeline_urls = {
     "df": "https://github.com/ddamanze/NFL_Fourth_Down_Decision_Model/releases/download/v1.0-datasets/pipeline_df.pkl",
     "df_model": "https://github.com/ddamanze/NFL_Fourth_Down_Decision_Model/releases/download/v1.0-datasets/pipeline_df_model.pkl",
-    "df_punt_fg": "https://github.com/ddamanze/NFL_Fourth_Down_Decision_Model/releases/download/v1.0-datasets/pipeline_df_punt_fg.pkl",
+    #"df_punt_fg": "https://github.com/ddamanze/NFL_Fourth_Down_Decision_Model/releases/download/v1.0-datasets/pipeline_df_punt_fg.pkl",
     "base_pred_df": "https://github.com/ddamanze/NFL_Fourth_Down_Decision_Model/releases/download/v1.0-datasets/pipeline_base_pred_df.pkl"
 }
 
-@st.cache_data
+@st.cache_data(max_entries=1)
 def load_pipeline_outputs():
     outputs = {}
     for name, url in pipeline_urls.items():
@@ -84,9 +52,9 @@ def load_pipeline_outputs():
             if col not in outputs["df"].columns:
                 outputs["df"][col] = None
 
-    return outputs["df"], outputs["df_model"], outputs["df_punt_fg"], outputs["base_pred_df"]
+    return outputs["df"], outputs["df_model"], outputs["base_pred_df"]#, outputs["df_punt_fg"]
 
-df, df_model, df_punt_fg, base_pred_df = load_pipeline_outputs()
+df, df_model, base_pred_df = load_pipeline_outputs()
 
 pipeline = RunPipeline(df_model, mode='realtime')
 
@@ -208,7 +176,7 @@ with tab1:
         return videos
 
 
-    @st.cache_data
+    @st.cache_data(ttl=3600)
     def get_videos_cached(api_key, query, key_plays):
         return get_youtube_videos(api_key, query, key_plays)
 
@@ -614,150 +582,148 @@ with tab3:
 
 with tab4:
     st.markdown("Select Weekly Recap to see the most aggressive and conservative coaching decisions. Select Coaches to see a coach's most aggressive and conservative during the season.")
-    with st.form("recap_form"):
-        scout_mode = st.selectbox("Scout Mode", ["Weekly Recap","Coaches"])
-        submitted = st.form_submit_button("See Summary")
-        if scout_mode == "Weekly Recap":
-            week_recap_df = base_pred_df
+    scout_mode = st.selectbox("Scout Mode", ["Weekly Recap","Coaches"])
+    if scout_mode == "Weekly Recap":
+        week_recap_df = base_pred_df
 
-            @st.cache_data
-            def get_years_weeks(df):
-                years = sorted(df['year'].unique(), reverse=True)
-                weeks_by_year = {year: sorted(df[df['year'] == year]['week'].unique()) for year in years}
-                return years, weeks_by_year
-            years, weeks_by_year = get_years_weeks(week_recap_df)
+        @st.cache_data(max_entries=10)
+        def get_years_weeks(df):
+            years = sorted(df['year'].unique(), reverse=True)
+            weeks_by_year = {year: sorted(df[df['year'] == year]['week'].unique()) for year in years}
+            return years, weeks_by_year
+        years, weeks_by_year = get_years_weeks(week_recap_df)
 
-            selected_year = st.selectbox("Select a season", years, key="select_year")
-            week_recap_df = week_recap_df[week_recap_df['year'] == selected_year]
-            selected_week = st.selectbox("Select a week", weeks_by_year[selected_year])
-            # Taking out anything longer than 4th and 10
-            week_recap_df = week_recap_df[(week_recap_df['week'] == selected_week) & (week_recap_df['ydstogo'] < 10)]
-            week_recap_df['prob_difference'] = week_recap_df.apply(model_misses, axis=1)
-            top3_aggressive_plays = week_recap_df[week_recap_df['decision_class'] == 'Go For It'].sort_values(by='prob_difference', ascending=False).head(5)
-            top3_conservative_plays = week_recap_df[week_recap_df['decision_class'] != 'Go For It'].sort_values(by='prob_difference', ascending=True).head(5)
-            recap_text = "WEEKLY 4TH DOWN DECISION RECAP\n\nTop 3 Aggressive Plays:\n"
-            for _, row in top3_aggressive_plays.iterrows():
-                recap_text += scenario_sentence(row['qtr'], row['half_seconds_remaining'], row['score_differential'], row['posteam_coach'], row['posteam'], row['defteam'], row['week'], row['ydstogo'],
-                            row['yardline_100'], row['decision_class'], row['model_recommendation'], row['fourth_down_probability']) + "\n"
+        selected_year = st.selectbox("Select a season", years, key="select_year")
+        week_recap_df = week_recap_df[week_recap_df['year'] == selected_year]
+        selected_week = st.selectbox("Select a week", weeks_by_year[selected_year])
+        # Taking out anything longer than 4th and 10
+        week_recap_df = week_recap_df[(week_recap_df['week'] == selected_week) & (week_recap_df['ydstogo'] < 10)]
+        week_recap_df['prob_difference'] = week_recap_df.apply(model_misses, axis=1)
+        top3_aggressive_plays = week_recap_df[week_recap_df['decision_class'] == 'Go For It'].sort_values(by='prob_difference', ascending=False).head(5)
+        top3_conservative_plays = week_recap_df[week_recap_df['decision_class'] != 'Go For It'].sort_values(by='prob_difference', ascending=True).head(5)
+        recap_text = "WEEKLY 4TH DOWN DECISION RECAP\n\nTop 3 Aggressive Plays:\n"
+        for _, row in top3_aggressive_plays.iterrows():
+            recap_text += scenario_sentence(row['qtr'], row['half_seconds_remaining'], row['score_differential'], row['posteam_coach'], row['posteam'], row['defteam'], row['week'], row['ydstogo'],
+                        row['yardline_100'], row['decision_class'], row['model_recommendation'], row['fourth_down_probability']) + "\n"
 
-            recap_text += "\nTop 3 Conservative Plays:\n"
-            # Adjust yardline_100 to align with field yardage (i.e. OWN45) do the same for time left in the game
-            for _, row in top3_conservative_plays.iterrows():
-                recap_text += scenario_sentence(row['qtr'], row['half_seconds_remaining'], row['score_differential'], row['posteam_coach'], row['posteam'], row['defteam'], row['week'], row['ydstogo'],
-                                              row['yardline_100'], row['decision_class'], row['model_recommendation'],
-                                              row['fourth_down_probability']) + "\n"
-            if submitted:
-                st.session_state.active_tab = 3
-                with st.spinner("Creating recap with OpenAI..."):
-                    response = client.chat.completions.create(
-                        model="gpt-4o-mini",
-                        messages = [{"role": "system", "content": ("You are an expert NFL analyst creating a concise, engaging recap of 4th down decisions for the season.\n"
-                        "For each play, you will be provided:\n"
-                        "- qtr (quarter)\n"
-                        "- half_seconds_remaining\n"
-                        "- score_differential\n"
-                        "- posteam_coach (coach making the decision)\n"
-                        "- posteam (team)\n"
-                        "- defteam (defending team)\n"
-                        "- week (game week)\n"
-                        "- ydstogo (yards to go)\n"
-                        "- yardline_100 (distance from opponent endzone)\n"
-                        "- decision_class (what the coach decided)\n"
-                        "- model_recommendation (what the model predicted)\n"
-                        "- fourth_down_probability (predicted probability to go for it)\n"
-                        "Instructions:\n"
-                        "1. Only include plays where decision_class ≠ model_recommendation. Skip all others.\n"
-                        "2. Recap the most aggressive and most conservative play calls of the week (5 plays each, but only describe the first 3 for each).\n"
-                        "3. Convert half_seconds_remaining to standard clock format (e.g., 1730 → 14:30) using qtr to determine the quarter.\n"
-                        "4. Indicate if the team is up, down, or tied based on score_differential.\n"
-                        "5. Use yardline_100 to describe field position:\n"
-                        "   - If yardline_100 > 50, the play is at the team’s own (100 - yardline_100) yard line.\n"
-                        "   - If yardline_100 ≤ 50, the play is at the opponent’s yardline_100 yard line.\n"
-                        "6. Include fourth_down_probability only if decision_class or model_recommendation is 'Go For It', formatted as a percentage with 1 decimal (e.g., 20.0%).\n"
-                        "7. Make the recap user-friendly, with short sentences, emojis instead of numeric bullets, and NFL fan-friendly language.\n")},
-                            {"role": "user", "content": recap_text}
-                        ],
-                        temperature=0.7,
-                        max_tokens=1000
-                    )
-                    ai_recap = response.choices[0].message.content
-
-                st.subheader(f"Week {selected_week} Recap")
-                st.write(ai_recap)
-
-        if scout_mode == "Coaches":
-            scout_coaches_df = net_aggressive_df
-            # Or select a team
-            selected_coach = st.selectbox("Select a Coach", scout_coaches_df['coach'].unique())
-            scout_coaches_df = scout_coaches_df[scout_coaches_df['coach'] == selected_coach]
-
-            coach_recap_df = base_pred_df
-            selected_year = st.selectbox("Select a season", sorted(coach_recap_df['year'].unique(), reverse=True), key="select_year")
-            coach_recap_df = coach_recap_df[coach_recap_df['year'] == selected_year]
-            # Taking out anything longer than 4th and 10
-            coach_recap_df = coach_recap_df[(coach_recap_df['posteam_coach'] == selected_coach) & (coach_recap_df['ydstogo'] < 10)]
-            coach_recap_df['prob_difference'] = coach_recap_df.apply(model_misses, axis=1)
-            top3_aggressive_plays_coach = coach_recap_df[coach_recap_df['decision_class'] == 'Go For It'].sort_values(by='prob_difference', ascending=False).head(5)
-            top3_conservative_plays_coach = coach_recap_df[coach_recap_df['decision_class'] != 'Go For It'].sort_values(by='prob_difference', ascending=True).head(5)
-
-            for _, row in scout_coaches_df.iterrows():
-                st.markdown(
-                    f"""
-                    <div style="display: flex; align-items: center; padding: 6px 0;">
-                        <img src="{row['coach_url']}" style="width:100px; border-radius:8px; margin-bottom: 8px; margin-right: 12px;" />
-                        <div style="font-weight: bold; font-size: 16px; margin-right: 12px;">{row['coach']}</div>
-                        <div style="color: #ccc; font-size: 12px; margin-bottom: 4px; margin-right: 2px;">{row['team']}</div>
-                        <img src="{row['team_logo_url']}" style="width:32px; margin-top: 2px;" />
-                    </div>
-                    """,
-                    unsafe_allow_html=True
+        recap_text += "\nTop 3 Conservative Plays:\n"
+        # Adjust yardline_100 to align with field yardage (i.e. OWN45) do the same for time left in the game
+        for _, row in top3_conservative_plays.iterrows():
+            recap_text += scenario_sentence(row['qtr'], row['half_seconds_remaining'], row['score_differential'], row['posteam_coach'], row['posteam'], row['defteam'], row['week'], row['ydstogo'],
+                                          row['yardline_100'], row['decision_class'], row['model_recommendation'],
+                                          row['fourth_down_probability']) + "\n"
+        if st.button("See Summary"):
+            st.session_state.active_tab = 3
+            with st.spinner("Creating recap with OpenAI..."):
+                response = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages = [{"role": "system", "content": ("You are an expert NFL analyst creating a concise, engaging recap of 4th down decisions for the season.\n"
+                    "For each play, you will be provided:\n"
+                    "- qtr (quarter)\n"
+                    "- half_seconds_remaining\n"
+                    "- score_differential\n"
+                    "- posteam_coach (coach making the decision)\n"
+                    "- posteam (team)\n"
+                    "- defteam (defending team)\n"
+                    "- week (game week)\n"
+                    "- ydstogo (yards to go)\n"
+                    "- yardline_100 (distance from opponent endzone)\n"
+                    "- decision_class (what the coach decided)\n"
+                    "- model_recommendation (what the model predicted)\n"
+                    "- fourth_down_probability (predicted probability to go for it)\n"
+                    "Instructions:\n"
+                    "1. Only include plays where decision_class ≠ model_recommendation. Skip all others.\n"
+                    "2. Recap the most aggressive and most conservative play calls of the week (5 plays each, but only describe the first 3 for each).\n"
+                    "3. Convert half_seconds_remaining to standard clock format (e.g., 1730 → 14:30) using qtr to determine the quarter. Never include anything over 14:59.\n"
+                    "4. Indicate if the team is up, down, or tied based on score_differential.\n"
+                    "5. Use yardline_100 to describe field position:\n"
+                    "   - If yardline_100 > 50, the play is at the team’s own (100 - yardline_100) yard line.\n"
+                    "   - If yardline_100 ≤ 50, the play is at the opponent’s yardline_100 yard line.\n"
+                    "6. Include fourth_down_probability only if decision_class or model_recommendation is 'Go For It', formatted as a percentage with 1 decimal (e.g., 20.0%).\n"
+                    "7. Make the recap user-friendly, with short sentences, emojis instead of numeric bullets, and NFL fan-friendly language.\n")},
+                        {"role": "user", "content": recap_text}
+                    ],
+                    temperature=0.7,
+                    max_tokens=1000
                 )
+                ai_recap = response.choices[0].message.content
 
-            recap_text = "WEEKLY 4TH DOWN DECISION RECAP\n\nTop 3 Aggressive Play Calls:\n"
-            for _, row in top3_aggressive_plays_coach.iterrows():
-                recap_text += scenario_sentence(row['qtr'], row['half_seconds_remaining'], row['score_differential'], row['posteam_coach'], row['posteam'], row['defteam'], row['week'], row['ydstogo'],
-                            row['yardline_100'], row['decision_class'], row['model_recommendation'], row['fourth_down_probability']) + "\n"
+            st.subheader(f"Week {selected_week} Recap")
+            st.write(ai_recap)
 
-            recap_text += "\nTop 3 Conservative Plays:\n"
-            # Adjust yardline_100 to align with field yardage (i.e. OWN45) do the same for time left in the game
-            for _, row in top3_conservative_plays_coach.iterrows():
-                recap_text += scenario_sentence(row['qtr'], row['half_seconds_remaining'], row['score_differential'], row['posteam_coach'], row['posteam'], row['defteam'], row['week'], row['ydstogo'],
-                                              row['yardline_100'], row['decision_class'], row['model_recommendation'],
-                                              row['fourth_down_probability']) + "\n"
-            if submitted:
-                st.session_state.active_tab = 3
-                with st.spinner("Creating recap with OpenAI..."):
-                    response = client.chat.completions.create(
-                        model="gpt-4o-mini",
-                        messages = [{"role": "system", "content": ("You are an expert NFL analyst creating a concise, engaging recap of 4th down decisions for the season.\n"
-                        "For each play, you will be provided:\n"
-                        "- qtr (quarter)\n"
-                        "- half_seconds_remaining\n"
-                        "- score_differential\n"
-                        "- posteam_coach (coach making the decision)\n"
-                        "- posteam (team)\n"
-                        "- defteam (defending team)\n"
-                        "- week (game week)\n"
-                        "- ydstogo (yards to go)\n"
-                        "- yardline_100 (distance from opponent endzone)\n"
-                        "- decision_class (what the coach decided)\n"
-                        "- model_recommendation (what the model predicted)\n"
-                        "- fourth_down_probability (predicted probability to go for it)\n"
-                        "Instructions:\n"
-                        "1. Only include plays where decision_class ≠ model_recommendation. Skip all others.\n"
-                        "2. Recap the most aggressive and most conservative play calls of the week (5 plays each, but only describe the first 3 for each).\n"
-                        "3. Convert half_seconds_remaining to standard clock format (e.g., 1730 → 14:30) using qtr to determine the quarter.\n"
-                        "4. Indicate if the team is up, down, or tied based on score_differential.\n"
-                        "5. Use yardline_100 to describe field position:\n"
-                        "   - If yardline_100 > 50, the play is at the team’s own (100 - yardline_100) yard line.\n"
-                        "   - If yardline_100 ≤ 50, the play is at the opponent’s yardline_100 yard line.\n"
-                        "6. Include fourth_down_probability only if decision_class or model_recommendation is 'Go For It', formatted as a percentage with 1 decimal (e.g., 20.0%).\n"
-                        "7. Make the recap user-friendly, with short sentences, emojis instead of numeric bullets, and NFL fan-friendly language.\n")},
-                            {"role": "user", "content": recap_text}
-                        ],
-                        temperature=0.7,
-                        max_tokens=1200
-                    )
-                    ai_recap = response.choices[0].message.content
+    if scout_mode == "Coaches":
+        scout_coaches_df = net_aggressive_df
+        # Or select a team
+        selected_coach = st.selectbox("Select a Coach", scout_coaches_df['coach'].unique())
+        scout_coaches_df = scout_coaches_df[scout_coaches_df['coach'] == selected_coach]
 
-                st.write(ai_recap)
+        coach_recap_df = base_pred_df
+        selected_year = st.selectbox("Select a season", sorted(coach_recap_df['year'].unique(), reverse=True), key="select_year")
+        coach_recap_df = coach_recap_df[coach_recap_df['year'] == selected_year]
+        # Taking out anything longer than 4th and 10
+        coach_recap_df = coach_recap_df[(coach_recap_df['posteam_coach'] == selected_coach) & (coach_recap_df['ydstogo'] < 10)]
+        coach_recap_df['prob_difference'] = coach_recap_df.apply(model_misses, axis=1)
+        top3_aggressive_plays_coach = coach_recap_df[coach_recap_df['decision_class'] == 'Go For It'].sort_values(by='prob_difference', ascending=False).head(5)
+        top3_conservative_plays_coach = coach_recap_df[coach_recap_df['decision_class'] != 'Go For It'].sort_values(by='prob_difference', ascending=True).head(5)
+
+        for _, row in scout_coaches_df.iterrows():
+            st.markdown(
+                f"""
+                <div style="display: flex; align-items: center; padding: 6px 0;">
+                    <img src="{row['coach_url']}" style="width:100px; border-radius:8px; margin-bottom: 8px; margin-right: 12px;" />
+                    <div style="font-weight: bold; font-size: 16px; margin-right: 12px;">{row['coach']}</div>
+                    <div style="color: #ccc; font-size: 12px; margin-bottom: 4px; margin-right: 2px;">{row['team']}</div>
+                    <img src="{row['team_logo_url']}" style="width:32px; margin-top: 2px;" />
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+        recap_text = "WEEKLY 4TH DOWN DECISION RECAP\n\nTop 3 Aggressive Play Calls:\n"
+        for _, row in top3_aggressive_plays_coach.iterrows():
+            recap_text += scenario_sentence(row['qtr'], row['half_seconds_remaining'], row['score_differential'], row['posteam_coach'], row['posteam'], row['defteam'], row['week'], row['ydstogo'],
+                        row['yardline_100'], row['decision_class'], row['model_recommendation'], row['fourth_down_probability']) + "\n"
+
+        recap_text += "\nTop 3 Conservative Plays:\n"
+        # Adjust yardline_100 to align with field yardage (i.e. OWN45) do the same for time left in the game
+        for _, row in top3_conservative_plays_coach.iterrows():
+            recap_text += scenario_sentence(row['qtr'], row['half_seconds_remaining'], row['score_differential'], row['posteam_coach'], row['posteam'], row['defteam'], row['week'], row['ydstogo'],
+                                          row['yardline_100'], row['decision_class'], row['model_recommendation'],
+                                          row['fourth_down_probability']) + "\n"
+        if st.button("See Summary"):
+            st.session_state.active_tab = 3
+            with st.spinner("Creating recap with OpenAI..."):
+                response = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages = [{"role": "system", "content": ("You are an expert NFL analyst creating a concise, engaging recap of 4th down decisions for the season.\n"
+                    "For each play, you will be provided:\n"
+                    "- qtr (quarter)\n"
+                    "- half_seconds_remaining\n"
+                    "- score_differential\n"
+                    "- posteam_coach (coach making the decision)\n"
+                    "- posteam (team)\n"
+                    "- defteam (defending team)\n"
+                    "- week (game week)\n"
+                    "- ydstogo (yards to go)\n"
+                    "- yardline_100 (distance from opponent endzone)\n"
+                    "- decision_class (what the coach decided)\n"
+                    "- model_recommendation (what the model predicted)\n"
+                    "- fourth_down_probability (predicted probability to go for it)\n"
+                    "Instructions:\n"
+                    "1. Only include plays where decision_class ≠ model_recommendation. Skip all others.\n"
+                    "2. Recap the most aggressive and most conservative play calls of the week (5 plays each, but only describe the first 3 for each).\n"
+                    "3. Convert half_seconds_remaining to standard clock format (e.g., 1730 → 14:30) using qtr to determine the quarter. Never include anything over 14:59.\n"
+                    "4. Indicate if the team is up, down, or tied based on score_differential.\n"
+                    "5. Use yardline_100 to describe field position:\n"
+                    "   - If yardline_100 > 50, the play is at the team’s own (100 - yardline_100) yard line.\n"
+                    "   - If yardline_100 ≤ 50, the play is at the opponent’s yardline_100 yard line.\n"
+                    "6. Include fourth_down_probability only if decision_class or model_recommendation is 'Go For It', formatted as a percentage with 1 decimal (e.g., 20.0%).\n"
+                    "7. Make the recap user-friendly, with short sentences, emojis instead of numeric bullets, and NFL fan-friendly language.\n")},
+                        {"role": "user", "content": recap_text}
+                    ],
+                    temperature=0.7,
+                    max_tokens=1200
+                )
+                ai_recap = response.choices[0].message.content
+
+            st.write(ai_recap)
