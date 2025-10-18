@@ -42,7 +42,9 @@ class Coaches:
      - when the coach was more aggressive in going for it on 4th down when the model recommended to punt or kick (over_aggression)
      - when the coach was more conservative and decided to kick a FG or punt when the model recommended to go for it (missed_opportunity)"""
     def coaching_stats(self):
-        if (self._cached_latest_season != self.latest_season) or (self.coach_stats.empty):
+        #if (self._cached_latest_season != self.latest_season) or (self.coach_stats.empty):
+        if (self._cached_latest_season != self.latest_season) or (self.coach_stats_df.empty):
+
             df = self.df.copy()
 
             # Handle missing data by dropping rows with critical missing values
