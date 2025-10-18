@@ -47,15 +47,19 @@ class ProcessData:
                     'score_differential', 'fg_prob', 'td_prob', 'wp', 'def_wp','drive_first_downs', 'drive_inside20',
                     'posteam_coach','distance_bin', 'posteam_wp_post', 'defteam_wp_post', 'decision_class', 'field_position',
                     'year', 'score_diff_bins', 'is_fourth_and_one', 'defteam', 'home_team', 'away_team', 'home_wp_post',
-                    'away_wp_post', 'home_coach', 'away_coach', 'distance_success_rate', 'fourth_down_converted', 'two_point_attempt']
+                    'away_wp_post', 'home_coach', 'away_coach', 'distance_success_rate', 'fourth_down_converted', 'two_point_attempt', 'desc']
         logger.info(f"Cleaning data, features: {features}")
 
         # Include Expected Points (EP) and Expected Points Added (EPA) for postgame model simulation
         if self.include_epa:
             features += ['ep', 'epa']
 
-        # All features filtered down to the ones listed above.
-        df = df[features]
+        # All features filtered down to the ones listed above, but be robust to schema differences
+        available = [c for c in features if c in df.columns]
+        missing = [c for c in features if c not in df.columns]
+        if missing:
+            logger.warning(f"Missing expected columns (will be skipped): {missing}")
+        df = df[available]
 
         # Convert the following columns to booleans
         convert_to_bool = ['fourth_down_converted', 'fourth_down_failed', 'field_goal_attempt', 'punt_attempt',
