@@ -26,6 +26,14 @@ class Coaches:
                 if c not in add_df.columns:
                     add_df[c] = pd.NA
             self.df = pd.concat([self.df[needed_cols], add_df[needed_cols]], ignore_index=True)
+
+        self.coach_stats_df = pd.DataFrame()
+        if latest_season is not None:
+            self.latest_season = int(latest_season)
+        else:
+            self.latest_season = int(self.df['year'].max())
+        logger.info(f"Latest season: {self.latest_season}")
+        self._cached_latest_season = None
     
     # def __init__(self, post_pred_df: pd.DataFrame, latest_season=None):
     #     self.df = post_pred_df
