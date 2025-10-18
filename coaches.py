@@ -6,15 +6,36 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 class Coaches:
-    def __init__(self, post_pred_df: pd.DataFrame, latest_season=None):
-        self.df = post_pred_df
-        self.coach_stats_df = pd.DataFrame()
-        if latest_season is not None:
-            self.latest_season = int(latest_season)
-        else:
-            self.latest_season= int(self.df['year'].max())
-        logger.info(f"Latest season: {self.latest_season}")
-        self._cached_latest_season = None
+    def __init__(self, post_pred_df: pd.DataFrame, latest_season=None, extra_df: pd.DataFrame | None = None, extra_year: int | None = None):
+        """
+        post_pred_df: historical predictions (e.g., 2020-2024)
+        extra_df: optional additional predictions to append (e.g., 2025 ty_analysis)
+        extra_year: if extra_df lacks a 'year' column, use this value
+        """
+        self.df = post_pred_df.copy()
+        # Optionally append extra (e.g., 2025) rows to the historical dataset
+        if extra_df is not None and isinstance(extra_df, pd.DataFrame) and not extra_df.empty:
+            add_df = extra_df.copy()
+            if 'year' not in add_df.columns and extra_year is not None:
+                add_df['year'] = int(extra_year)
+            # Minimal set needed for stats; align columns for safe concat
+            needed_cols = ['posteam_coach', 'model_recommendation', 'decision_class', 'year']
+            for c in needed_cols:
+                if c not in self.df.columns:
+                    self.df[c] = pd.NA
+                if c not in add_df.columns:
+                    add_df[c] = pd.NA
+            self.df = pd.concat([self.df[needed_cols], add_df[needed_cols]], ignore_index=True)
+    
+    # def __init__(self, post_pred_df: pd.DataFrame, latest_season=None):
+    #     self.df = post_pred_df
+    #     self.coach_stats_df = pd.DataFrame()
+    #     if latest_season is not None:
+    #         self.latest_season = int(latest_season)
+    #     else:
+    #         self.latest_season= int(self.df['year'].max())
+    #     logger.info(f"Latest season: {self.latest_season}")
+    #     self._cached_latest_season = None
 
     """Creates dataframe for coaching stats. Includes columns that display:
      - when the coach and the model were aligned on the 4th down decision (coach_model_aligned)
